@@ -119,7 +119,6 @@ public partial class SceneManager : Node
         }
 
         backgroundContainer.Visible = !addToScene;
-
         Space = space;
     }
 

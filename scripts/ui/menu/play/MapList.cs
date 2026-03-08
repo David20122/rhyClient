@@ -321,7 +321,7 @@ public partial class MapList : Panel, ISkinnable
 
 					if (Lobby.Map != null && IsVisibleInTree() && focused is not LineEdit)
 					{
-                        LegacyRunner.Play(Lobby.Map, Lobby.Speed, Lobby.StartFrom, Lobby.Modifiers);
+                        GameScene.Play(Lobby.Map, Lobby.Speed, Lobby.StartFrom, Lobby.Modifiers);
                     }
                     break;
             }
@@ -354,7 +354,7 @@ public partial class MapList : Panel, ISkinnable
 
         if (selectedMapID == map.Name && playIfPreSelected)
         {
-            LegacyRunner.Play(Lobby.Map, Lobby.Speed, Lobby.StartFrom, Lobby.Modifiers);
+            GameScene.Play(Lobby.Map, Lobby.Speed, Lobby.StartFrom, Lobby.Modifiers);
         }
 
         selectedMapID = map.Name;

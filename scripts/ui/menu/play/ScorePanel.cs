@@ -87,7 +87,7 @@ public partial class ScorePanel : Panel
             Replay replay = new(replayPath);
             Map map = MapParser.Decode(replay.MapFilePath);
             
-            LegacyRunner.Play(map, replay.Speed, replay.StartFrom, replay.Modifiers, null, [replay]);
+            GameScene.Play(map, replay.Speed, replay.StartFrom, replay.Modifiers, null, [replay]);
         }
     }
 }

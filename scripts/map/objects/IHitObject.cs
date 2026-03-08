@@ -24,7 +24,7 @@ public interface IHitObject : ITimelineObject
     /// <summary>
     /// Hit result of the <see cref="IHitObject"/>
     /// </summary>
-    bool Hit { get; }
+    HitState HitState { get; }
 
     /// <summary>
     /// Whether the <see cref="IHitObject"/> can be hit
