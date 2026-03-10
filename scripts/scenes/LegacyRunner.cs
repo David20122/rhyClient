@@ -511,6 +511,11 @@ public partial class LegacyRunner : BaseScene
 
 		for (int i = 0; i < activeMods.Count; i++)
 		{
+            if (activeMods[i] == "Spin")
+            {
+                continue;
+            }
+
 			Sprite3D icon = modifier_icon.Instantiate<Sprite3D>();
 
 			AddChild(icon);
@@ -1162,6 +1167,7 @@ public partial class LegacyRunner : BaseScene
 
 		MenuCursor.Instance.UpdateVisible(false, false);
         SceneManager.Space.UpdateState(true);
+        SceneManager.Space.UpdateMap(CurrentAttempt.Map);
     }
 
 	public static void Play(Map map, double speed = 1, double startFrom = 0, Dictionary<string, bool> mods = null, string[] players = null, Replay[] replays = null)
