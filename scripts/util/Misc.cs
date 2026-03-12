@@ -52,7 +52,7 @@ public class Misc
         reference.QueueFree();
     }
 
-public static Image LoadImageFromBuffer(byte[] buffer)
+    public static Image LoadImageFromBuffer(byte[] buffer)
     {
         Image img = new Image();
         foreach (var load in new Func<byte[], Error>[] {

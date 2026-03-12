@@ -1,3 +1,4 @@
+/*
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -1423,3 +1424,4 @@ public partial class LegacyRunner : BaseScene
 		//scoreLabel.Text = score.ToString();
 	}
 }
+*/

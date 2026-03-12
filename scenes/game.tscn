@@ -4,27 +4,38 @@
 [ext_resource type="ArrayMesh" uid="uid://ceww5w8t33lqy" path="res://user/meshes/squircle.obj" id="2_e1j6l"]
 [ext_resource type="Texture2D" uid="uid://b3g4aw54n6bow" path="res://user/skins/default/game/grid.png" id="2_q78ea"]
 [ext_resource type="Script" uid="uid://dp8nga2aot1n2" path="res://scripts/game/Runner.cs" id="2_qnb83"]
+[ext_resource type="Script" uid="uid://bxwlotp5vcjux" path="res://scripts/game/managers/ReplayManager.cs" id="2_twgab"]
 [ext_resource type="Script" uid="uid://okqdw5gj567n" path="res://scripts/game/LegacyRenderer.cs" id="3_ew8wr"]
 [ext_resource type="Texture2D" uid="uid://3e1tjlr4m0wt" path="res://user/skins/default/game/cursor.png" id="3_negii"]
 [ext_resource type="Script" uid="uid://n6n303pw3qbd" path="res://scripts/game/managers/HudManager.cs" id="3_sww3w"]
+[ext_resource type="Script" uid="uid://cqqaf7cwx5ty1" path="res://scripts/game/ui/HealthBar.cs" id="4_js0lu"]
 [ext_resource type="Theme" uid="uid://dhuhu3mmaew1a" path="res://themes/theme.tres" id="4_rvp5o"]
 [ext_resource type="FontFile" uid="uid://4bnnn01f4dqr" path="res://fonts/Ubuntu-Medium.ttf" id="5_pxgh4"]
 [ext_resource type="Texture2D" uid="uid://cxv6ey5xb6b0f" path="res://user/skins/default/game/health_background.png" id="6_bbly8"]
+[ext_resource type="Script" uid="uid://dbyc4etv31aub" path="res://scripts/game/ui/ProgressBar.cs" id="7_gxtfn"]
 [ext_resource type="Texture2D" uid="uid://4x2vfpyjkri6" path="res://user/skins/default/game/health.png" id="7_wjg6i"]
 [ext_resource type="Texture2D" uid="uid://dmc5f6ajp8xv1" path="res://user/skins/default/game/progress_background.png" id="8_eu3ux"]
 [ext_resource type="Shader" uid="uid://dsysoy6w8ndnk" path="res://scripts/shaders/video_background.gdshader" id="8_ocxsu"]
+[ext_resource type="Script" uid="uid://dv0gni2j4t686" path="res://scripts/game/ui/PanelLeft.cs" id="8_qnb83"]
 [ext_resource type="Texture2D" uid="uid://d3s17ehomjscd" path="res://user/skins/default/game/progress.png" id="9_nde5v"]
 [ext_resource type="FontFile" uid="uid://cmjos3o0k2f6t" path="res://fonts/Comfortaa-Medium.ttf" id="11_o37lt"]
 [ext_resource type="Texture2D" uid="uid://80bitp5weqrb" path="res://user/skins/default/game/panel_left_background.png" id="11_sdncv"]
 [ext_resource type="FontFile" uid="uid://b6hgjef6s6oly" path="res://fonts/Comfortaa-Bold.ttf" id="12_axsek"]
 [ext_resource type="Texture2D" uid="uid://diba7c3s8as4s" path="res://user/skins/default/game/panel_right_background.png" id="12_whe6p"]
 [ext_resource type="Texture2D" uid="uid://dw2gxd3m24h4m" path="res://user/skins/default/game/hits.png" id="13_6rhgc"]
+[ext_resource type="Script" uid="uid://c3gf0hgrqqqx5" path="res://scripts/game/ui/PanelRight.cs" id="13_sww3w"]
 [ext_resource type="Shader" uid="uid://bp2sv5ynsubi2" path="res://scripts/shaders/alpha_gradient.gdshader" id="14_3xchs"]
 [ext_resource type="Texture2D" uid="uid://c3x2cp3tx4vqt" path="res://user/skins/default/game/misses.png" id="14_bqf11"]
 [ext_resource type="Shader" uid="uid://bx4888tau78tk" path="res://scripts/shaders/combo_progress.gdshader" id="14_y51pe"]
+[ext_resource type="Script" uid="uid://0boi2mqa8488" path="res://scripts/game/ui/Combo.cs" id="20_suyxu"]
+[ext_resource type="Script" uid="uid://cmmf22opvqenp" path="res://scripts/game/ui/Progress.cs" id="21_twgab"]
+[ext_resource type="Script" uid="uid://bjc8qp66nisos" path="res://scripts/game/ui/Title.cs" id="22_02fa5"]
 [ext_resource type="Texture2D" uid="uid://lfj8i1bi6kfs" path="res://textures/ui/pause.png" id="23_7silw"]
 [ext_resource type="FontFile" uid="uid://dotb3skhwouha" path="res://fonts/Roboto-Bold.ttf" id="23_wf21h"]
 [ext_resource type="FontFile" uid="uid://rs2mb33nd3b1" path="res://fonts/Roboto-Italic.ttf" id="24_j6p10"]
+[ext_resource type="Script" uid="uid://dhrqgv44b65ls" path="res://scripts/game/ui/Skip.cs" id="25_nepv3"]
+[ext_resource type="Script" uid="uid://ddtnij8m4eipl" path="res://scripts/game/ui/Grid.cs" id="27_js0lu"]
+[ext_resource type="Script" uid="uid://b7jvxorkr4xfi" path="res://scripts/game/ui/Speed.cs" id="28_gxtfn"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_a6jk1"]
 resource_name = "Material"
@@ -67,21 +78,8 @@ transform_format = 1
 use_colors = true
 mesh = SubResource("QuadMesh_5p2n8")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_73q55"]
-transparency = 1
-cull_mode = 2
-shading_mode = 0
-disable_fog = true
-vertex_color_use_as_albedo = true
-vertex_color_is_srgb = true
-
-[sub_resource type="MultiMesh" id="MultiMesh_almyi"]
-transform_format = 1
-use_colors = true
-mesh = ExtResource("2_e1j6l")
-
 [sub_resource type="ViewportTexture" id="ViewportTexture_pl11u"]
-viewport_path = NodePath("HUD/Health/HealthViewport")
+viewport_path = NodePath("Runner/HUD/Health/HealthViewport")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4p8vu"]
 resource_local_to_scene = true
@@ -97,7 +95,7 @@ material = SubResource("StandardMaterial3D_4p8vu")
 size = Vector2(10.88, 0.8)
 
 [sub_resource type="ViewportTexture" id="ViewportTexture_bhx41"]
-viewport_path = NodePath("HUD/ProgressBar/ProgressBarViewport")
+viewport_path = NodePath("Runner/HUD/ProgressBar/ProgressBarViewport")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p1h21"]
 resource_local_to_scene = true
@@ -113,7 +111,7 @@ material = SubResource("StandardMaterial3D_p1h21")
 size = Vector2(10.88, 0.8)
 
 [sub_resource type="ViewportTexture" id="ViewportTexture_sww3w"]
-viewport_path = NodePath("HUD/PanelLeft/PanelLeftViewport")
+viewport_path = NodePath("Runner/HUD/PanelLeft/PanelLeftViewport")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nody0"]
 resource_local_to_scene = true
@@ -128,7 +126,7 @@ size = Vector2(4, 10)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_x2xye"]
 shader = ExtResource("14_y51pe")
-shader_parameter/progress = 0.0
+shader_parameter/progress = 0.8870000421325
 shader_parameter/colour = Color(1, 1, 1, 1)
 shader_parameter/background_colour = Color(0.155, 0.155, 0.155, 1)
 shader_parameter/sides = 8
@@ -143,7 +141,7 @@ font = ExtResource("12_axsek")
 font_size = 50
 
 [sub_resource type="ViewportTexture" id="ViewportTexture_suyxu"]
-viewport_path = NodePath("HUD/PanelRight/PanelRightViewport")
+viewport_path = NodePath("Runner/HUD/PanelRight/PanelRightViewport")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ro5ir"]
 resource_local_to_scene = true
@@ -175,8 +173,21 @@ font_size = 50
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_gc8yu"]
 shader = ExtResource("14_3xchs")
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_73q55"]
+transparency = 1
+cull_mode = 2
+shading_mode = 0
+disable_fog = true
+vertex_color_use_as_albedo = true
+vertex_color_is_srgb = true
+
+[sub_resource type="MultiMesh" id="MultiMesh_almyi"]
+transform_format = 1
+use_colors = true
+mesh = ExtResource("2_e1j6l")
+
 [sub_resource type="ViewportTexture" id="ViewportTexture_qnb83"]
-viewport_path = NodePath("Video/VideoViewport")
+viewport_path = NodePath("Runner/Video/VideoViewport")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rj3ky"]
 resource_local_to_scene = true
@@ -232,61 +243,50 @@ Button/styles/hover = SubResource("StyleBoxFlat_6kbgk")
 Button/styles/normal = SubResource("StyleBoxEmpty_jlnvv")
 Button/styles/pressed = SubResource("StyleBoxFlat_y08lf")
 
-[node name="SceneGame" type="Node" unique_id=909809067 node_paths=PackedStringArray("Runner", "HudManager", "Menu")]
+[node name="SceneGame" type="Node" unique_id=909809067 node_paths=PackedStringArray("Runner", "Menu")]
 script = ExtResource("1_bhx41")
 Runner = NodePath("Runner")
-HudManager = NodePath("Runner/HUDManager")
 Menu = NodePath("Menu")
 UseGameSpace = true
 AddSpaceAsChild = true
 
-[node name="Runner" type="Node3D" parent="." unique_id=580620214 node_paths=PackedStringArray("Camera", "Grid", "Cursor", "Notes")]
+[node name="ReplayManager" type="Node" parent="." unique_id=40137833]
+script = ExtResource("2_twgab")
+
+[node name="Runner" type="Node3D" parent="." unique_id=580620214 node_paths=PackedStringArray("HudManager", "Camera", "Grid", "Cursor", "Notes")]
 script = ExtResource("2_qnb83")
+HudManager = NodePath("HUD")
+NotesOnly = true
 Camera = NodePath("Camera3D")
-Grid = NodePath("Grid")
-Cursor = NodePath("Grid/Cursor")
+Grid = NodePath("HUD/Grid")
+Cursor = NodePath("HUD/Grid/Cursor")
 Notes = NodePath("Notes")
 
-[node name="HUDManager" type="Node" parent="Runner" unique_id=1829246552 node_paths=PackedStringArray("Runner", "HUDContainer")]
+[node name="HUD" type="Node3D" parent="Runner" unique_id=1234434255 node_paths=PackedStringArray("Runner")]
 script = ExtResource("3_sww3w")
 Runner = NodePath("..")
-HUDContainer = NodePath("../../HUD")
 
-[node name="Grid" type="MeshInstance3D" parent="Runner" unique_id=730517176]
+[node name="Grid" type="MeshInstance3D" parent="Runner/HUD" unique_id=730517176]
 mesh = SubResource("QuadMesh_aih2q")
-skeleton = NodePath("../..")
-
-[node name="Cursor" type="MeshInstance3D" parent="Runner/Grid" unique_id=292067677]
-mesh = SubResource("QuadMesh_xij4d")
 skeleton = NodePath("../../..")
+script = ExtResource("27_js0lu")
 
-[node name="CursorTrail" type="MultiMeshInstance3D" parent="Runner/Grid" unique_id=913051903]
+[node name="Cursor" type="MeshInstance3D" parent="Runner/HUD/Grid" unique_id=292067677]
+mesh = SubResource("QuadMesh_xij4d")
+skeleton = NodePath("../../../..")
+
+[node name="CursorTrail" type="MultiMeshInstance3D" parent="Runner/HUD/Grid" unique_id=913051903]
 material_override = SubResource("StandardMaterial3D_ssr8x")
 multimesh = SubResource("MultiMesh_e28va")
 
-[node name="Camera3D" type="Camera3D" parent="Runner" unique_id=112686709]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.75)
-current = true
-fov = 70.0
-size = 5.0
-
-[node name="Notes" type="MultiMeshInstance3D" parent="Runner" unique_id=77746100 node_paths=PackedStringArray("Runner")]
-material_override = SubResource("StandardMaterial3D_73q55")
-cast_shadow = 0
-multimesh = SubResource("MultiMesh_almyi")
-script = ExtResource("3_ew8wr")
-Runner = NodePath("..")
-
-[node name="HUD" type="Node3D" parent="." unique_id=1234434255]
-
-[node name="Health" type="MeshInstance3D" parent="HUD" unique_id=449857227]
-unique_name_in_owner = true
+[node name="Health" type="MeshInstance3D" parent="Runner/HUD" unique_id=449857227]
 transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, -6.3, -10)
 cast_shadow = 0
 mesh = SubResource("QuadMesh_b1hbo")
-skeleton = NodePath("../..")
+skeleton = NodePath("../../..")
+script = ExtResource("4_js0lu")
 
-[node name="HealthViewport" type="SubViewport" parent="HUD/Health" unique_id=1637011839]
+[node name="HealthViewport" type="SubViewport" parent="Runner/HUD/Health" unique_id=1637011839]
 disable_3d = true
 transparent_bg = true
 canvas_item_default_texture_filter = 2
@@ -295,7 +295,7 @@ size_2d_override = Vector2i(1088, 80)
 size_2d_override_stretch = true
 render_target_update_mode = 4
 
-[node name="Background" type="TextureRect" parent="HUD/Health/HealthViewport" unique_id=2016213185]
+[node name="Background" type="TextureRect" parent="Runner/HUD/Health/HealthViewport" unique_id=2016213185]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -303,7 +303,7 @@ grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("6_bbly8")
 
-[node name="Main" type="TextureRect" parent="HUD/Health/HealthViewport" unique_id=366630384]
+[node name="Main" type="TextureRect" parent="Runner/HUD/Health/HealthViewport" unique_id=366630384]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -313,14 +313,14 @@ texture = ExtResource("7_wjg6i")
 expand_mode = 1
 stretch_mode = 1
 
-[node name="ProgressBar" type="MeshInstance3D" parent="HUD" unique_id=528447019]
-unique_name_in_owner = true
+[node name="ProgressBar" type="MeshInstance3D" parent="Runner/HUD" unique_id=528447019]
 transform = Transform3D(1, 0, 0, 0, 0.965926, -0.258819, 0, 0.258819, 0.965926, 0, 6.3, -10)
 cast_shadow = 0
 mesh = SubResource("QuadMesh_7mook")
-skeleton = NodePath("../..")
+skeleton = NodePath("../../..")
+script = ExtResource("7_gxtfn")
 
-[node name="ProgressBarViewport" type="SubViewport" parent="HUD/ProgressBar" unique_id=658400463]
+[node name="ProgressBarViewport" type="SubViewport" parent="Runner/HUD/ProgressBar" unique_id=658400463]
 disable_3d = true
 transparent_bg = true
 canvas_item_default_texture_filter = 2
@@ -329,7 +329,7 @@ size_2d_override = Vector2i(1088, 80)
 size_2d_override_stretch = true
 render_target_update_mode = 4
 
-[node name="Background" type="TextureRect" parent="HUD/ProgressBar/ProgressBarViewport" unique_id=1129572664]
+[node name="Background" type="TextureRect" parent="Runner/HUD/ProgressBar/ProgressBarViewport" unique_id=1129572664]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -337,7 +337,7 @@ grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("8_eu3ux")
 
-[node name="Main" type="TextureRect" parent="HUD/ProgressBar/ProgressBarViewport" unique_id=2016165310]
+[node name="Main" type="TextureRect" parent="Runner/HUD/ProgressBar/ProgressBarViewport" unique_id=2016165310]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -347,20 +347,20 @@ texture = ExtResource("9_nde5v")
 expand_mode = 1
 stretch_mode = 1
 
-[node name="PanelLeft" type="MeshInstance3D" parent="HUD" unique_id=2045187203]
-unique_name_in_owner = true
+[node name="PanelLeft" type="MeshInstance3D" parent="Runner/HUD" unique_id=2045187203]
 transform = Transform3D(0.984808, 0, 0.173648, 0, 1, 0, -0.173648, 0, 0.984808, -7.5, 0, -9)
 material_override = SubResource("StandardMaterial3D_nody0")
 mesh = SubResource("QuadMesh_ssyve")
-skeleton = NodePath("../..")
+skeleton = NodePath("../../..")
+script = ExtResource("8_qnb83")
 
-[node name="PanelLeftViewport" type="SubViewport" parent="HUD/PanelLeft" unique_id=944518522]
+[node name="PanelLeftViewport" type="SubViewport" parent="Runner/HUD/PanelLeft" unique_id=944518522]
 disable_3d = true
 transparent_bg = true
 canvas_item_default_texture_filter = 2
 size = Vector2i(250, 625)
 
-[node name="Background" type="TextureRect" parent="HUD/PanelLeft/PanelLeftViewport" unique_id=1374853699]
+[node name="Background" type="TextureRect" parent="Runner/HUD/PanelLeft/PanelLeftViewport" unique_id=1374853699]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -368,7 +368,7 @@ grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("11_sdncv")
 
-[node name="MultiplierProgress" type="Panel" parent="HUD/PanelLeft/PanelLeftViewport" unique_id=1067613329]
+[node name="MultiplierProgress" type="Panel" parent="Runner/HUD/PanelLeft/PanelLeftViewport" unique_id=1067613329]
 clip_children = 2
 material = SubResource("ShaderMaterial_x2xye")
 anchors_preset = -1
@@ -382,7 +382,7 @@ offset_right = 128.0
 offset_bottom = 128.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_56f8v")
 
-[node name="Score" type="Label" parent="HUD/PanelLeft/PanelLeftViewport" unique_id=1330190508]
+[node name="Score" type="Label" parent="Runner/HUD/PanelLeft/PanelLeftViewport" unique_id=1330190508]
 anchors_preset = -1
 anchor_left = 0.5
 anchor_top = 0.35
@@ -395,7 +395,7 @@ text = "0"
 label_settings = SubResource("LabelSettings_usmyc")
 horizontal_alignment = 1
 
-[node name="Multiplier" type="Label" parent="HUD/PanelLeft/PanelLeftViewport" unique_id=1660490363]
+[node name="Multiplier" type="Label" parent="Runner/HUD/PanelLeft/PanelLeftViewport" unique_id=1660490363]
 anchors_preset = -1
 anchor_left = 0.5
 anchor_top = 0.65
@@ -408,21 +408,21 @@ text = "1x"
 label_settings = SubResource("LabelSettings_usmyc")
 horizontal_alignment = 1
 
-[node name="PanelRight" type="MeshInstance3D" parent="HUD" unique_id=1993445313]
-unique_name_in_owner = true
+[node name="PanelRight" type="MeshInstance3D" parent="Runner/HUD" unique_id=1993445313]
 transform = Transform3D(0.984808, 0, -0.173648, 0, 1, 0, 0.173648, 0, 0.984808, 7.5, 0, -9)
 material_override = SubResource("StandardMaterial3D_ro5ir")
 mesh = SubResource("QuadMesh_ssyve")
-skeleton = NodePath("../..")
+skeleton = NodePath("../../..")
+script = ExtResource("13_sww3w")
 
-[node name="PanelRightViewport" type="SubViewport" parent="HUD/PanelRight" unique_id=623021244]
+[node name="PanelRightViewport" type="SubViewport" parent="Runner/HUD/PanelRight" unique_id=623021244]
 process_mode = 3
 disable_3d = true
 transparent_bg = true
 canvas_item_default_texture_filter = 2
 size = Vector2i(250, 625)
 
-[node name="Background" type="TextureRect" parent="HUD/PanelRight/PanelRightViewport" unique_id=1856482217]
+[node name="Background" type="TextureRect" parent="Runner/HUD/PanelRight/PanelRightViewport" unique_id=1856482217]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -430,7 +430,7 @@ grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("12_whe6p")
 
-[node name="Accuracy" type="Label" parent="HUD/PanelRight/PanelRightViewport" unique_id=1669266042]
+[node name="Accuracy" type="Label" parent="Runner/HUD/PanelRight/PanelRightViewport" unique_id=1669266042]
 anchors_preset = -1
 anchor_left = 0.5
 anchor_top = 0.35
@@ -443,7 +443,7 @@ text = "100.00%"
 label_settings = SubResource("LabelSettings_usmyc")
 horizontal_alignment = 1
 
-[node name="Hits" type="Label" parent="HUD/PanelRight/PanelRightViewport" unique_id=2096630009]
+[node name="Hits" type="Label" parent="Runner/HUD/PanelRight/PanelRightViewport" unique_id=2096630009]
 anchors_preset = -1
 anchor_left = 0.5
 anchor_top = 0.625
@@ -458,7 +458,7 @@ text = "0"
 label_settings = SubResource("LabelSettings_5bid2")
 horizontal_alignment = 2
 
-[node name="Misses" type="Label" parent="HUD/PanelRight/PanelRightViewport" unique_id=1379241442]
+[node name="Misses" type="Label" parent="Runner/HUD/PanelRight/PanelRightViewport" unique_id=1379241442]
 anchors_preset = -1
 anchor_left = 0.5
 anchor_top = 0.625
@@ -471,7 +471,7 @@ theme = ExtResource("4_rvp5o")
 text = "0"
 label_settings = SubResource("LabelSettings_v63ri")
 
-[node name="SimpleMisses" type="Label" parent="HUD/PanelRight/PanelRightViewport" unique_id=1871751782]
+[node name="SimpleMisses" type="Label" parent="Runner/HUD/PanelRight/PanelRightViewport" unique_id=1871751782]
 visible = false
 anchors_preset = 8
 anchor_left = 0.5
@@ -485,7 +485,7 @@ theme = ExtResource("4_rvp5o")
 text = "0"
 label_settings = SubResource("LabelSettings_g4ffu")
 
-[node name="Sum" type="Label" parent="HUD/PanelRight/PanelRightViewport" unique_id=150248329]
+[node name="Sum" type="Label" parent="Runner/HUD/PanelRight/PanelRightViewport" unique_id=150248329]
 anchors_preset = -1
 anchor_left = 0.5
 anchor_top = 0.7
@@ -499,7 +499,7 @@ text = "0"
 label_settings = SubResource("LabelSettings_s1j5a")
 horizontal_alignment = 1
 
-[node name="HitsIcon" type="TextureRect" parent="HUD/PanelRight/PanelRightViewport" unique_id=482771805]
+[node name="HitsIcon" type="TextureRect" parent="Runner/HUD/PanelRight/PanelRightViewport" unique_id=482771805]
 anchors_preset = -1
 anchor_left = 0.5
 anchor_top = 0.625
@@ -514,7 +514,7 @@ theme = ExtResource("4_rvp5o")
 texture = ExtResource("13_6rhgc")
 expand_mode = 2
 
-[node name="MissesIcon" type="TextureRect" parent="HUD/PanelRight/PanelRightViewport" unique_id=901292564]
+[node name="MissesIcon" type="TextureRect" parent="Runner/HUD/PanelRight/PanelRightViewport" unique_id=901292564]
 anchors_preset = -1
 anchor_left = 0.5
 anchor_top = 0.625
@@ -528,7 +528,7 @@ theme = ExtResource("4_rvp5o")
 texture = ExtResource("14_bqf11")
 expand_mode = 2
 
-[node name="Line" type="ColorRect" parent="HUD/PanelRight/PanelRightViewport" unique_id=629344643]
+[node name="Line" type="ColorRect" parent="Runner/HUD/PanelRight/PanelRightViewport" unique_id=629344643]
 material = SubResource("ShaderMaterial_gc8yu")
 anchors_preset = -1
 anchor_top = 0.65
@@ -540,8 +540,10 @@ offset_bottom = 2.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Progress" type="Label3D" parent="HUD" unique_id=496335082]
-unique_name_in_owner = true
+[node name="Progress" type="Node3D" parent="Runner/HUD" unique_id=533288593]
+script = ExtResource("21_twgab")
+
+[node name="Label" type="Label3D" parent="Runner/HUD/Progress" unique_id=496335082]
 transform = Transform3D(3.5, 0, 0, 0, 3.38074, -0.905867, 0, 0.905867, 3.38074, 0, 7, -10)
 pixel_size = 0.0025
 modulate = Color(1, 1, 1, 0.74509805)
@@ -550,8 +552,10 @@ text = "0:00 / 0:00"
 font = ExtResource("12_axsek")
 font_size = 64
 
-[node name="Title" type="Label3D" parent="HUD" unique_id=841289409]
-unique_name_in_owner = true
+[node name="Title" type="Node3D" parent="Runner/HUD" unique_id=1847012801]
+script = ExtResource("22_02fa5")
+
+[node name="Label" type="Label3D" parent="Runner/HUD/Title" unique_id=841289409]
 transform = Transform3D(2, 0, 0, 0, 1.93185, -0.517638, 0, 0.517638, 1.93185, 0, 8.25, -10)
 outline_modulate = Color(0, 0, 0, 0)
 text = "N/A - N/A"
@@ -560,8 +564,10 @@ font_size = 64
 autowrap_mode = 3
 width = 2500.0
 
-[node name="Combo" type="Label3D" parent="HUD" unique_id=1330017059]
-unique_name_in_owner = true
+[node name="Combo" type="Node3D" parent="Runner/HUD" unique_id=2131933661]
+script = ExtResource("20_suyxu")
+
+[node name="Label" type="Label3D" parent="Runner/HUD/Combo" unique_id=1330017059]
 transform = Transform3D(7, 0, 0, 0, 6.89365, -1.21554, 0, 1.21554, 6.89365, 0, 3.5, -10)
 pixel_size = 0.0025
 modulate = Color(1, 1, 1, 0)
@@ -571,17 +577,22 @@ font = ExtResource("5_pxgh4")
 font_size = 64
 outline_size = 4
 
-[node name="Speed" type="Label3D" parent="HUD" unique_id=1294863906]
-unique_name_in_owner = true
+[node name="Speed" type="Node3D" parent="Runner/HUD" unique_id=267334765]
 transform = Transform3D(7, 0, 0, 0, 6.76148, 1.81173, 0, -1.81173, 6.76148, 0, -7.5, -10)
+script = ExtResource("28_gxtfn")
+
+[node name="Label" type="Label3D" parent="Runner/HUD/Speed" unique_id=1294863906]
+transform = Transform3D(0.99999994, 0, 0, 0, 0.99999994, 0, 0, 0, 0.99999994, 0, 0, 0)
 pixel_size = 0.0025
 modulate = Color(1, 1, 1, 0.39215687)
 outline_modulate = Color(0, 0, 0, 0)
 text = "1.00x"
 font = ExtResource("5_pxgh4")
 
-[node name="Skip" type="Label3D" parent="HUD" unique_id=1231864437]
-unique_name_in_owner = true
+[node name="Skip" type="Node3D" parent="Runner/HUD" unique_id=1658610942]
+script = ExtResource("25_nepv3")
+
+[node name="Label" type="Label3D" parent="Runner/HUD/Skip" unique_id=1231864437]
 transform = Transform3D(7, 0, 0, 0, 6.76148, 1.81173, 0, -1.81173, 6.76148, 0, -5, -10)
 pixel_size = 0.0025
 modulate = Color(1, 1, 1, 0)
@@ -589,20 +600,34 @@ outline_modulate = Color(0, 0, 0, 0)
 text = "Press Space to skip"
 font = ExtResource("12_axsek")
 
-[node name="Video" type="MeshInstance3D" parent="." unique_id=1036410191]
+[node name="Camera3D" type="Camera3D" parent="Runner" unique_id=112686709]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.75)
+current = true
+fov = 70.0
+size = 5.0
+
+[node name="Notes" type="MultiMeshInstance3D" parent="Runner" unique_id=77746100 node_paths=PackedStringArray("Runner")]
+material_override = SubResource("StandardMaterial3D_73q55")
+cast_shadow = 0
+multimesh = SubResource("MultiMesh_almyi")
+script = ExtResource("3_ew8wr")
+Runner = NodePath("..")
+
+[node name="Video" type="MeshInstance3D" parent="Runner" unique_id=1036410191]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.479675, -0.459572, -99.9929)
 visible = false
 material_override = SubResource("StandardMaterial3D_rj3ky")
 transparency = 1.0
 cast_shadow = 0
 mesh = SubResource("QuadMesh_3p7x2")
+skeleton = NodePath("../..")
 
-[node name="VideoViewport" type="SubViewport" parent="Video" unique_id=866766269]
+[node name="VideoViewport" type="SubViewport" parent="Runner/Video" unique_id=866766269]
 transparent_bg = true
 canvas_item_default_texture_filter = 2
 size = Vector2i(1920, 1080)
 
-[node name="VideoStreamPlayer" type="VideoStreamPlayer" parent="Video/VideoViewport" unique_id=61327167]
+[node name="VideoStreamPlayer" type="VideoStreamPlayer" parent="Runner/Video/VideoViewport" unique_id=61327167]
 material = SubResource("ShaderMaterial_4qlgx")
 anchors_preset = 15
 anchor_right = 1.0

@@ -6,7 +6,6 @@ using System.Runtime.CompilerServices;
 public partial class GameScene : BaseScene
 {
 	[Export] public Runner Runner;
-	[Export] public HudManager HudManager;
 	[Export] public Panel Menu;
 	public static Attempt Attempt;
 
@@ -23,18 +22,16 @@ public partial class GameScene : BaseScene
 	{
 		base._Ready();
 
-		HudManager.Init();
-
+		Control focused = SceneManager.Root.GetViewport().GuiGetFocusOwner();
+		focused?.ReleaseFocus();
 		Input.MouseMode = Attempt.Settings.AbsoluteInput.Value || Attempt.IsReplay ? Input.MouseModeEnum.ConfinedHidden : Input.MouseModeEnum.Captured;
 		Input.UseAccumulatedInput = false;
-
-		Attempt.HitStateChanged += HitStateChanged;
 
 		Panel menuButtonsHolder = Menu.GetNode<Panel>("Holder");
 
 		Menu.GetNode<Button>("Button").Pressed += HideMenu;
 		menuButtonsHolder.GetNode<Button>("Resume").Pressed += HideMenu;
-		//menuButtonsHolder.GetNode<Button>("Restart").Pressed += Restart;
+		menuButtonsHolder.GetNode<Button>("Restart").Pressed += Restart;
 		menuButtonsHolder.GetNode<Button>("Settings").Pressed += () => {
 			SettingsManager.ShowMenu();
 		};
@@ -56,14 +53,8 @@ public partial class GameScene : BaseScene
 		};
 		
 		Runner.Attempt = Attempt;
-		Runner.Set(Attempt.Map);
     	Runner.Play();
 	}
-
-    public override void _Process(double delta)
-    {
-        base._Process(delta);
-    }
 
     public override void Load()
     {
@@ -79,58 +70,21 @@ public partial class GameScene : BaseScene
 	public static void Play(Map map, double speed, double startFrom, Dictionary<string, bool> mods, string[] players = null, Replay[] replays = null)
 	{
 		map = MapParser.Decode(map.FilePath);
-		Attempt = new Attempt(map, speed, startFrom, mods ?? [], null, null);
+		//Attempt = new Attempt(map, speed, startFrom, mods ?? [], players, replays);
 		SceneManager.Load("res://scenes/game.tscn");
 	}
-
-	public void HitStateChanged(HitObject hitObject, HitState hitState)
+	
+	public void Restart()
 	{
-		float lateness = Attempt.IsReplay ? Attempt.HitsInfo[hitObject.Index] : (float)(((int)Attempt.Progress - Attempt.Map.Notes[hitObject.Index].Millisecond) / Attempt.Speed);
-		float factor = 1 - Math.Max(0, lateness - 25) / 150f;
-		uint hitScore = (uint)(100 * Attempt.ComboMultiplier * Attempt.ModsMultiplier * factor * ((Attempt.Speed - 1) / 2.5 + 1));
-		
-		switch (hitState)
-		{
-			case HitState.HIT:
-				Attempt.Hits++;
-				Attempt.Sum++;
-				Attempt.Accuracy = Math.Floor((float)Attempt.Hits / Attempt.Sum * 10000) / 100;
-				Attempt.Combo++;
-				Attempt.ComboMultiplierProgress++;
-				Attempt.LastHitColour = SkinManager.Instance.Skin.NoteColors[hitObject.Index % SkinManager.Instance.Skin.NoteColors.Length];
-				Attempt.Score += hitScore;
-				Attempt.HealthStep = Math.Max(Attempt.HealthStep / 1.45, 15);
-				Attempt.Health = Math.Min(100, Attempt.Health + Attempt.HealthStep / 1.75);
-				Stats.NotesHit++;
-				if (Attempt.Combo > Stats.HighestCombo) Stats.HighestCombo = Attempt.Combo;
-				Attempt.HitsInfo[hitObject.Index] = lateness;
+		Attempt.Alive = false;
+		Attempt.Qualifies = false;
+		Runner.Stop(false);
 
-				if (Attempt.ComboMultiplierProgress == Attempt.ComboMultiplierIncrement)
-				{
-					if (Attempt.ComboMultiplier < 8)
-					{
-						Attempt.ComboMultiplierProgress = Attempt.ComboMultiplier == 7 ? Attempt.ComboMultiplierIncrement : 0;
-						Attempt.ComboMultiplier++;
-					}
-				}
-				break;
-			case HitState.MISS:
-				Attempt.Misses++;
-				Attempt.Sum++;
-				Attempt.Accuracy = Mathf.Floor((float)Attempt.Hits / Attempt.Sum * 10000) / 100;
-				Attempt.Combo = 0;
-				Attempt.ComboMultiplierProgress = 0;
-				Attempt.ComboMultiplier = Math.Max(1, Attempt.ComboMultiplier - 1);
-				Attempt.Health = Math.Max(0, Attempt.Health - Attempt.HealthStep);
-				Attempt.HealthStep = Math.Min(Attempt.HealthStep * 1.2, 100);
-				Stats.NotesMissed++;
-				Attempt.HitsInfo[hitObject.Index] = -1;
-				break;
-			default:
-				break;
-		}
+		var oldAttempt = Attempt;
+		var map = MapParser.Decode(oldAttempt.Map.FilePath);
+		Attempt = new Attempt(map, oldAttempt.Speed, oldAttempt.StartFrom, oldAttempt.Mods, oldAttempt.Players, oldAttempt.Replays);
 
-		HudManager.UpdateHud(Attempt);
+		SceneManager.ReloadCurrentScene();
 	}
 
 	public override void _Input(InputEvent @event)
@@ -173,7 +127,7 @@ public partial class GameScene : BaseScene
 
 					break;
 				case Key.Quoteleft:
-					//Restart();
+					Restart();
 					break;
 				case Key.F1:
 					if (Attempt.IsReplay)
@@ -195,7 +149,7 @@ public partial class GameScene : BaseScene
 							break;
 						}
 
-						//Skip();
+						Runner.Skip();
 					}
 					break;
 				case Key.F:

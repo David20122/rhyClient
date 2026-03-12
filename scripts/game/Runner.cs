@@ -3,10 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 
 public partial class Runner : Node3D
 {
+	[Export] public HudManager HudManager;
+
 	public Attempt Attempt;
 	public Map Map;
 	private SettingsProfile settings;
@@ -22,23 +26,26 @@ public partial class Runner : Node3D
 	public bool SpinCamera = false;
 
 	[ExportCategory("Settings")]
-	[Export] public bool HideHUD = false;
+	[Export] public bool NotesOnly = false;
 
 	[ExportCategory("Nodes")]
 	[Export] public Camera3D Camera;
 	[Export] public MeshInstance3D Grid;
 	[Export] public MeshInstance3D Cursor;
 	[Export] public MultiMeshInstance3D Notes;
+	[Export] public VideoStreamPlayer VideoStreamPlayer;
 
 	public override void _Ready()
 	{
 		base._Ready();
 
 		// if null, assign them to nodes under Runner
+		HudManager ??= GetNode<HudManager>("HUD");
 		Camera ??= GetNode<Camera3D>("Camera3D");
-		Grid ??= GetNode<MeshInstance3D>("Grid");
+		Grid ??= HudManager.GetNode<MeshInstance3D>("Grid");
 		Cursor ??= GetNode<MeshInstance3D>("Cursor");
 		Notes ??= GetNode<MultiMeshInstance3D>("Notes");
+		VideoStreamPlayer ??= GetNode<MeshInstance3D>("Video").GetNode<SubViewport>("VideoViewport").GetNode<VideoStreamPlayer>("VideoStreamPlayer");
 	}
 
 	public override void _Process(double delta)
@@ -49,7 +56,99 @@ public partial class Runner : Node3D
 
 		if (!Playing) return;
 		Attempt.Progress += delta * 1000 * Attempt.Speed;
-		Attempt.CanSkip = false;
+
+		// if (Attempt.IsReplay)
+		// {
+		// 	// if (!replayViewerSeekHovered || !leftMouseButtonDown)
+		// 	// {
+		// 	// 	replayViewerSeek.Value = Attempt.Progress / Attempt.LongestReplayLength;
+		// 	// }
+
+		// 	Vector2 positionSum = new();
+
+		// 	for (int i = 0; i < Attempt.Replays.Length; i++)
+		// 	{
+		// 		for (int j = Attempt.Replays[i].FrameIndex; j < Attempt.Replays[i].Frames.Length; j++)
+		// 		{
+		// 			if (Attempt.Progress < Attempt.Replays[i].Frames[j].Progress)
+		// 			{
+		// 				Attempt.Replays[i].FrameIndex = Math.Max(0, j - 1);
+		// 				break;
+		// 			}
+		// 		}
+
+		// 		int next = Math.Min(Attempt.Replays[i].FrameIndex + 1, Attempt.Replays[i].Frames.Length - 2);
+
+		// 		if (!Attempt.Replays[i].Complete && Attempt.Progress >= Attempt.Replays[i].Length)
+		// 		{
+		// 			Attempt.Replays[i].Complete = true;
+		// 			Attempt.Replays[i].LastNote = Attempt.PassedNotes;
+
+		// 			// Tween tween = Cursors[i].CreateTween();
+		// 			// tween.TweenProperty(Cursors[i], "transparency", 1, 1).SetTrans(Tween.TransitionType.Quad);
+		// 			// tween.Play();
+		// 		}
+
+		// 		double inverse = Mathf.InverseLerp(Attempt.Replays[i].Frames[Attempt.Replays[i].FrameIndex].Progress, Attempt.Replays[i].Frames[next].Progress, Attempt.Progress);
+		// 		Vector2 cursorPos = Attempt.Replays[i].Frames[Attempt.Replays[i].FrameIndex].CursorPosition.Lerp(Attempt.Replays[i].Frames[next].CursorPosition, (float)Math.Clamp(inverse, 0, 1));
+
+		// 		try
+		// 		{
+		// 			//Cursors[i].Position = new(cursorPos.X, cursorPos.Y, 0);
+		// 		}
+		// 		catch {}	// dnc
+
+		// 		Attempt.Replays[i].CurrentPosition = cursorPos;
+		// 		positionSum += cursorPos;
+		// 	}
+
+		// 	Vector2 averagePosition = positionSum / Attempt.Replays.Length;
+		// 	Vector2 mouseDelta = averagePosition - Attempt.CursorPosition;
+
+		// 	if (Attempt.Mods["Spin"])
+		// 	{
+		// 		mouseDelta *= new Vector2(1, -1) / (float)Attempt.Replays[0].Sensitivity * 106;	// idk lol
+		// 	}
+
+		// 	//UpdateCursor(mouseDelta);
+
+		// 	Attempt.CursorPosition = averagePosition;
+
+		// 	if (Attempt.Replays.Length == 1 && Attempt.Replays[0].SkipIndex < Attempt.Replays[0].Skips.Length && Attempt.Progress >= Attempt.Replays[0].Skips[Attempt.Replays[0].SkipIndex])
+		// 	{
+		// 		Attempt.Replays[0].SkipIndex++;
+		// 		Skip();
+		// 	}
+
+		// 	int complete = 0;
+
+		// 	foreach (Replay replay in Attempt.Replays)
+		// 	{
+		// 		if (replay.Complete)
+		// 		{
+		// 			complete++;
+		// 		}
+		// 	}
+
+		// 	if (complete == Attempt.Replays.Length)
+		// 	{
+		// 		QueueStop();
+		// 	}
+		// }
+		// else if (!Attempt.Stopped && settings.RecordReplays && !Attempt.Map.Ephemeral && now - Attempt.LastReplayFrame >= 1000000/60)	// 60hz
+		// {
+		// 	if (Attempt.ReplayFrames.Count == 0 || (Attempt.ReplayFrames[^1][1 .. 2] != new float[]{Attempt.CursorPosition.X, Attempt.CursorPosition.Y}))
+		// 	{
+		// 		Attempt.LastReplayFrame = now;
+		// 		Attempt.ReplayFrames.Add([
+		// 			(float)Attempt.Progress,
+		// 			Attempt.CursorPosition.X,
+		// 			Attempt.CursorPosition.Y
+		// 		]);
+		// 	}
+		// }
+
+		Cursor.RotationDegrees += Vector3.Back * settings.CursorRotation * (float)delta;
 
 		if (Attempt.Map.AudioBuffer != null)
 		{
@@ -67,8 +166,7 @@ public partial class Runner : Node3D
 			}
 		}
 
-		int nextNoteMillisecond = Attempt.PassedNotes >= Attempt.Map.Notes.Length ? (int)Attempt.MapLength + Constants.BREAK_TIME : Attempt.Map.Notes[Attempt.PassedNotes].Millisecond;
-
+		int nextNoteMillisecond = Attempt.PassedNotes >= Attempt.Map.Notes.Length ? (int)Attempt.MapLength : Attempt.Map.Notes[Attempt.PassedNotes].Millisecond;
 		if (nextNoteMillisecond - Attempt.Progress >= Constants.BREAK_TIME * Attempt.Speed)
 		{
 			int lastNoteMillisecond = Attempt.PassedNotes > 0 ? Attempt.Map.Notes[Attempt.PassedNotes - 1].Millisecond : 0;
@@ -76,8 +174,16 @@ public partial class Runner : Node3D
 
 			if (skipWindow >= 1000 * Attempt.Speed) // only allow skipping if i'm gonna allow it for at least 1 second
 			{
-				Attempt.CanSkip = true;
+				if (!Attempt.CanSkip)
+				{
+					Attempt.CanSkip = true;
+					Attempt.EmitSignal(Attempt.SignalName.SkipAvailable, Attempt);
+				}
 			}
+		}
+		else
+		{
+			Attempt.CanSkip = false;
 		}
 
 		ToProcess = 0;
@@ -148,7 +254,7 @@ public partial class Runner : Node3D
 			}
 			else if (Attempt.Replays.Length > 1 && note.Millisecond - Attempt.Progress <= 0 || Attempt.Replays[0].Notes[note.Index] != -1 && note.Millisecond - Attempt.Progress + Attempt.Replays[0].Notes[note.Index] * Attempt.Speed <= 0)
 			{
-				//Attempt.Hit(note.Index);
+				note.Hit(Attempt);
 			}
 		}
 
@@ -158,48 +264,95 @@ public partial class Runner : Node3D
 			return;
 		}
 
-		// if (Attempt.Skippable)
-		// {
-		// 	targetSkipLabelAlpha = 100f / 255f;
-		// 	progressLabel.Modulate = Color.Color8(255, 255, 255, (byte)(96 + (int)(140 * (Math.Sin(Math.PI * now / 750000) / 2 + 0.5))));
-		// }
-		// else
-		// {
-		// 	targetSkipLabelAlpha = 0;
-		// 	progressLabel.Modulate = Color.Color8(255, 255, 255, 190);
-		// }
-
-		// progressLabel.Text = $"{Util.String.FormatTime(Math.Max(0, Attempt.Progress) / 1000)} / {Util.String.FormatTime(MapLength / 1000)}";
-		// healthTexture.Size = healthTexture.Size.Lerp(new Vector2(32 + (float)Attempt.Health * 10.24f, 80), Math.Min(1, (float)delta * 64));
-		// progressBarTexture.Size = new Vector2(32 + (float)(Attempt.Progress / MapLength) * 1024, 80);
-		// skipLabel.Modulate = Color.Color8(255, 255, 255, (byte)(skipLabelAlpha * 255));
-
-		//Cursor.RotationDegrees += Vector3.Back * settings.CursorRotation * (float)delta;
+		if (StopQueued)
+		{
+			StopQueued = false;
+			Stop();
+			return;
+		}
 	}
 
-	public void Set(Map map) => Map = map;
+	public void HitStateChanged(HitObject hitObject, HitState hitState)
+	{
+		float lateness = Attempt.IsReplay ? Attempt.HitsInfo[hitObject.Index] : (float)(((int)Attempt.Progress - Attempt.Map.Notes[hitObject.Index].Millisecond) / Attempt.Speed);
+		float factor = 1 - Math.Max(0, lateness - 25) / 150f;
+		uint hitScore = (uint)(100 * Attempt.ComboMultiplier * Attempt.ModsMultiplier * factor * ((Attempt.Speed - 1) / 2.5 + 1));
+		
+		switch (hitState)
+		{
+			case HitState.HIT:
+				Attempt.Hits++;
+				Attempt.Sum++;
+				Attempt.Accuracy = Math.Floor((float)Attempt.Hits / Attempt.Sum * 10000) / 100;
+				Attempt.Combo++;
+				Attempt.ComboMultiplierProgress++;
+				Attempt.LastHitColour = SkinManager.Instance.Skin.NoteColors[hitObject.Index % SkinManager.Instance.Skin.NoteColors.Length];
+				Attempt.Score += hitScore;
+				Attempt.HealthStep = Math.Max(Attempt.HealthStep / 1.45, 15);
+				Attempt.Health = Math.Min(100, Attempt.Health + Attempt.HealthStep / 1.75);
+				if (!Attempt.IsReplay)
+				{
+					Stats.NotesHit++;
+					if (Attempt.Combo > Stats.HighestCombo) Stats.HighestCombo = Attempt.Combo;
+					Attempt.HitsInfo[hitObject.Index] = lateness;
+				}
+				if (Attempt.ComboMultiplierProgress == Attempt.ComboMultiplierIncrement)
+				{
+					if (Attempt.ComboMultiplier < 8)
+					{
+						Attempt.ComboMultiplierProgress = Attempt.ComboMultiplier == 7 ? Attempt.ComboMultiplierIncrement : 0;
+						Attempt.ComboMultiplier++;
+					}
+				}
+				break;
+			case HitState.MISS:
+				Attempt.Misses++;
+				Attempt.Sum++;
+				Attempt.Accuracy = Mathf.Floor((float)Attempt.Hits / Attempt.Sum * 10000) / 100;
+				Attempt.Combo = 0;
+				Attempt.ComboMultiplierProgress = 0;
+				Attempt.ComboMultiplier = Math.Max(1, Attempt.ComboMultiplier - 1);
+				Attempt.Health = Math.Max(0, Attempt.Health - Attempt.HealthStep);
+				Attempt.HealthStep = Math.Min(Attempt.HealthStep * 1.2, 100);
+				if (!Attempt.IsReplay)
+				{
+					Stats.NotesMissed++;
+					Attempt.HitsInfo[hitObject.Index] = -1;
+				}
+				if (!Attempt.IsReplay && Attempt.Health <= 0 && Attempt.Alive)
+				{
+					Attempt.Alive = false;
+					Attempt.Qualifies = false;
+					Attempt.DeathTime = Attempt.Progress;
+					SoundManager.FailSound.Play();
+
+					if (!Attempt.Mods["NoFail"]) QueueStop();
+				}
+				break;
+			default:
+				break;
+		}
+
+		Attempt.EmitSignal(Attempt.SignalName.AttemptStatsUpdated, Attempt);
+	}
 
 	public void Play()
 	{
-		if (Attempt == null)
+		if (Attempt == null) return;
+
+		if (!NotesOnly)
 		{
-			return;
+			HudManager.Init();
+			Attempt.TimeStarted = Time.GetTicksUsec();
+			Attempt.HitStateChanged += HitStateChanged;
 		}
 
-		Control focused = SceneManager.Root.GetViewport().GuiGetFocusOwner();
-		focused?.ReleaseFocus();
-
-		Playing = true;
-		Attempt.TimeStarted = Time.GetTicksUsec();
-		SpinCamera = Attempt.Mods.Any(mod => mod.Name == "Spin");
-
 		settings = SettingsManager.Instance.Settings;
-		Camera.Fov = settings.FoV.Value;
-		(Cursor.Mesh as QuadMesh).Size = new Vector2((float)(Constants.CURSOR_SIZE * settings.CursorScale.Value), (float)(Constants.CURSOR_SIZE * settings.CursorScale.Value));
-
-		(Cursor.GetActiveMaterial(0) as StandardMaterial3D).AlbedoTexture = SkinManager.Instance.Skin.CursorImage;
-		(Grid.GetActiveMaterial(0) as StandardMaterial3D).AlbedoTexture = SkinManager.Instance.Skin.GridImage;
+		//SpinCamera = Attempt.Mods.Any(mod => mod.Key == "Spin");
+		SpinCamera = Attempt.Mods["Spin"];
+		Camera.Fov = (float)(Attempt.IsReplay ? Attempt.Replays[0].FoV : settings.FoV.Value);
 		Notes.Multimesh.Mesh = SkinManager.Instance.Skin.NoteMesh;
+		Playing = true;
 
 		if (Attempt.Map.AudioBuffer != null)
 		{
@@ -216,19 +369,39 @@ public partial class Runner : Node3D
 		SoundManager.UpdateVolume();
 	}
 
-	public void Restart()
-	{
-		Attempt.Alive = false;
-		Attempt.Qualifies = false;
-		Stop(false);
-
-		SceneManager.ReloadCurrentScene();
-		GameScene.Play(MapParser.Decode(Attempt.Map.FilePath), Attempt.Speed, Attempt.StartFrom, null, Attempt.Players, Attempt.Replays);
-	}
-
 	public void Pause()
 	{
 
+	}
+
+	public void Skip()
+	{
+		if (Attempt.CanSkip)
+		{
+			Attempt.ReplaySkips.Add((float)Attempt.Progress);
+
+			if (Attempt.PassedNotes >= Attempt.Map.Notes.Length)
+			{
+				Attempt.Progress = SoundManager.Song.Stream.GetLength() * 1000;
+			}
+			else
+			{
+				Attempt.Progress = Attempt.Map.Notes[Attempt.PassedNotes].Millisecond - settings.ApproachTime * 1500 * Attempt.Speed; // turn AT to ms and multiply by 1.5x
+
+				// Discord.Client.UpdateEndTime(DateTime.UtcNow.AddSeconds((Time.GetUnixTimeFromSystem() + (Attempt.Map.Length - Attempt.Progress) / 1000 / Attempt.Speed)));
+
+				if (Attempt.Map.AudioBuffer != null)
+				{
+					if (!SoundManager.Song.Playing)
+					{
+						SoundManager.Song.Play();
+					}
+
+					SoundManager.Song.Seek((float)Attempt.Progress / 1000);
+					VideoStreamPlayer.StreamPosition = (float)Attempt.Progress / 1000;
+				}
+			}
+		}
 	}
 
 	public void QueueStop()
@@ -250,7 +423,7 @@ public partial class Runner : Node3D
 			return;
 		}
 
-		//Attempt.Stop();
+		Attempt.HitsInfo = Attempt.HitsInfo[0 .. (int)Attempt.PassedNotes];
 
 		if (!Attempt.IsReplay)
 		{
@@ -259,17 +432,17 @@ public partial class Runner : Node3D
 
 			if (Attempt.StartFrom == 0)
 			{
-				// if (!File.Exists($"{Constants.USER_FOLDER}/pbs/{Attempt.Map.Name}"))
-				// {
-				// 	List<byte> bytes = [0, 0, 0, 0];
-				// 	bytes.AddRange(SHA256.HashData([0, 0, 0, 0]));
-				// 	File.WriteAllBytes($"{Constants.USER_FOLDER}/pbs/{Attempt.Map.Name}", [.. bytes]);
-				// }
+				if (!File.Exists($"{Constants.USER_FOLDER}/pbs/{Attempt.Map.Name}"))
+				{
+					List<byte> bytes = [0, 0, 0, 0];
+					bytes.AddRange(SHA256.HashData([0, 0, 0, 0]));
+					File.WriteAllBytes($"{Constants.USER_FOLDER}/pbs/{Attempt.Map.Name}", [.. bytes]);
+				}
 
-				// Leaderboard leaderboard = new(Attempt.Map.Name, $"{Constants.USER_FOLDER}/pbs/{Attempt.Map.Name}");
+				Leaderboard leaderboard = new(Attempt.Map.Name, $"{Constants.USER_FOLDER}/pbs/{Attempt.Map.Name}");
 
-				// leaderboard.Add(new(Attempt.ID, "You", Attempt.Qualifies, Attempt.Score, Attempt.Accuracy, Time.GetUnixTimeFromSystem(), Attempt.Progress, Attempt.Map.Length, Attempt.Speed, Attempt.Mods));
-				// leaderboard.Save();
+				leaderboard.Add(new(Attempt.ID, "You", Attempt.Qualifies, Attempt.Score, Attempt.Accuracy, Time.GetUnixTimeFromSystem(), Attempt.Progress, Attempt.Map.Length, Attempt.Speed, Attempt.Mods));
+				leaderboard.Save();
 
 				if (Attempt.Qualifies)
 				{

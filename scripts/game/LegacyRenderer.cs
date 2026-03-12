@@ -4,11 +4,12 @@ using Godot;
 
 public partial class LegacyRenderer : MultiMeshInstance3D
 {
-    private SettingsProfile settings;
     [Export] public Runner Runner;
+    private SettingsProfile settings;
 
     public override void _Ready()
     {
+        Runner ??= GetParent<Runner>();
         settings = SettingsManager.Instance.Settings;
     }
 
@@ -37,7 +38,7 @@ public partial class LegacyRenderer : MultiMeshInstance3D
             float depth = (note.Millisecond - (float)Runner.Attempt.Progress) / (1000 * at) * ad / (float)Runner.Attempt.Speed;
             float alpha = Math.Clamp((1 - (float)depth / ad) / (fadeIn / 100), 0, 1);
 
-            if (Runner.Attempt.Mods.Any(mod => mod.Name == "Ghost"))
+            if (Runner.Attempt.Mods["Ghost"])
             {
                 alpha -= Math.Min(1, (ad - depth) / (ad / 2));
             }
@@ -54,7 +55,6 @@ public partial class LegacyRenderer : MultiMeshInstance3D
 
             int j = Runner.ToProcess - i - 1;
             Color color = SkinManager.Instance.Skin.NoteColors[note.Index % SkinManager.Instance.Skin.NoteColors.Length];
-
 
             transform.Origin = new Vector3(note.X, note.Y, -depth);
             color.A = alpha * settings.NoteOpacity;

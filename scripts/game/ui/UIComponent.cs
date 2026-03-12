@@ -1,9 +1,32 @@
 ﻿using Godot;
 using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.Swift;
 
-public abstract partial class UIComponent : Node3D
+public interface IUIComponent
 {
-    public abstract void Process(double delta, Attempt state);
+    Runner Runner {get; set;}
+    void Init() {}
+    void OnExitTree() {}
+    void Process(double delta, Attempt attempt) {}
+    void ApplySettings(SettingsProfile settings) {}
+}
 
-    public abstract void ApplySettings(SettingsProfile settings);
+public abstract partial class UIComponent : Node3D, IUIComponent
+{
+    public Runner Runner {get; set;}
+
+    public virtual void Init() {}
+
+    public virtual void OnExitTree() {}
+
+    public override void _ExitTree()
+    {
+        OnExitTree();
+        QueueFree();
+    }
+
+    public virtual void Process(double delta, Attempt attempt) {}
+
+    public virtual void ApplySettings(SettingsProfile settings) {}
 }

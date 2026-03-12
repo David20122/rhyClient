@@ -4,13 +4,16 @@ using System.Collections.Generic;
 
 public partial class Attempt : GodotObject
 {
+	[Signal] public delegate void AttemptStatsUpdatedEventHandler(Attempt attempt);
 	[Signal] public delegate void HitStateChangedEventHandler(HitObject hitObject, HitState newState);
+	[Signal] public delegate void SkipAvailableEventHandler(Attempt attempt);
 
 	public ulong TimeStarted;
 	public double DeathTime = -1;
 	public string ID;
 	public Map Map;
-	public List<Mod> Mods { get; set; } = new();
+	//public List<Mod> Mods { get; set; } = new();
+	public Dictionary<string, bool> Mods {get; set;} = new();
 	public Dictionary<Type, IList<object>> Objects { get; set; } = new();
 	public SettingsProfile Settings;
 	public bool IsReplay = false;
@@ -53,6 +56,7 @@ public partial class Attempt : GodotObject
 	public Vector2 RawCursorPosition = Vector2.Zero;
 	public double DistanceMM = 0;
 
+	public ulong FirstNote;
 	public FileAccess ReplayFile;
 	public Replay? Replay { get; set; }
 	public Replay[] Replays;
@@ -74,25 +78,25 @@ public partial class Attempt : GodotObject
 		Players = players ?? [];
 		Progress = Speed * -1000 - Settings.ApproachTime.Value * 1000 + StartFrom;
 		ComboMultiplierIncrement = Math.Max(2, (uint)Map.Notes.Length / 200);
-		Mods = [];
+		Mods = mods;
 		HitsInfo = IsReplay ? Replays[0].Notes : new float[Map.Notes.Length];
         
 
-		// foreach (KeyValuePair<string, bool> mod in mods)
-		// {
-		// 	Mods[mod.Key] = mod.Value;
-		// }
-		// if (StartFrom > 0)
-		// {
-		// 	Qualifies = false;
-		// 	foreach (Note note in Map.Notes)
-		// 	{
-		// 		if (note.Millisecond < StartFrom)
-		// 		{
-		// 			FirstNote = (ulong)note.Index + 1;
-		// 		}
-		// 	}
-		// }
-
+		foreach (KeyValuePair<string, bool> mod in mods)
+		{
+			Mods[mod.Key] = mod.Value;
+		}
+		
+		if (StartFrom > 0)
+		{
+			Qualifies = false;
+			foreach (Note note in Map.Notes)
+			{
+				if (note.Millisecond < StartFrom)
+				{
+					FirstNote = (ulong)note.Index + 1;
+				}
+			}
+		}
 	}
 }

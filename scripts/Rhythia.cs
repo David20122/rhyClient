@@ -165,8 +165,6 @@ public partial class Rhythia : Node
 
     public static void Quit()
     {
-        var settings = SettingsManager.Instance.Settings;
-
         if (Quitting)
         {
             return;
@@ -174,7 +172,7 @@ public partial class Rhythia : Node
 
         Quitting = true;
 
-        if (!GameScene.Attempt.IsReplay)
+        if (GameScene.Attempt != null && !GameScene.Attempt.IsReplay)
         {
             GameScene.Instance.Runner.Stop();
         }
@@ -197,10 +195,7 @@ public partial class Rhythia : Node
         if (what == NotificationWMCloseRequest)
         {
             if (SceneManager.Scene != null && SceneManager.Scene is GameScene)
-            
                 Stats.RageQuits++;
-            }
-
             Quit();
         }
     }

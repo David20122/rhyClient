@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Godot;
 
 public partial class Note : HitObject, IAnimatableObject<NoteAnimation>
@@ -11,6 +12,7 @@ public partial class Note : HitObject, IAnimatableObject<NoteAnimation>
     
     public Note(int index, int millisecond, float x, float y) : base(index, millisecond, x, y)
     {
+
     }
 
     public int CompareTo(Note other)

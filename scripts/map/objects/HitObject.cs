@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Diagnostics;
 using System.Net;
 
 public enum HitState
@@ -10,7 +11,7 @@ public enum HitState
     MISS
 }
 
-public partial class HitObject : GodotObject, IHitObject, IComparable<ITimelineObject>
+public partial class HitObject : RefCounted, IHitObject, IComparable<ITimelineObject>
 {
     public int Id => (int)ObjectType.Unknown;
 
