@@ -8,13 +8,13 @@ public partial class Combo : UIComponent
 	public override void OnExitTree()
     {
         if (Runner.Attempt == null) return;
-		Runner.Attempt.AttemptStatsUpdated -= OnStatsUpdated;
+		Runner.AttemptStatsUpdated -= OnStatsUpdated;
     }
 
 	public override void Init()
 	{
 		label = GetNode<Label3D>("Label");
-		Runner.Attempt.AttemptStatsUpdated += OnStatsUpdated;
+		Runner.AttemptStatsUpdated += OnStatsUpdated;
 	}
 
     public void OnStatsUpdated(Attempt attempt)

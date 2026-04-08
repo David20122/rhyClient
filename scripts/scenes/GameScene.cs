@@ -18,6 +18,11 @@ public partial class GameScene : BaseScene
         Instance = this;
     }
 
+	public override void _ExitTree()
+    {
+        Instance.QueueFree();
+    }
+
 	public override void _Ready()
 	{
 		base._Ready();
@@ -70,7 +75,7 @@ public partial class GameScene : BaseScene
 	public static void Play(Map map, double speed, double startFrom, Dictionary<string, bool> mods, string[] players = null, Replay[] replays = null)
 	{
 		map = MapParser.Decode(map.FilePath);
-		//Attempt = new Attempt(map, speed, startFrom, mods ?? [], players, replays);
+		Attempt = new Attempt(map, speed, startFrom, mods ?? [], players, replays);
 		SceneManager.Load("res://scenes/game.tscn");
 	}
 	

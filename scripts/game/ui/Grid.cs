@@ -13,7 +13,7 @@ public partial class Grid : MeshInstance3D, IUIComponent
     public override void _ExitTree()
     {
         if (Runner.Attempt == null) return;
-		Runner.Attempt.HitStateChanged -= OnHitStateChanged;
+		Runner.HitResultChanged -= onHitResultChanged;
         QueueFree();
     }
 
@@ -24,22 +24,22 @@ public partial class Grid : MeshInstance3D, IUIComponent
 		(Cursor.GetActiveMaterial(0) as StandardMaterial3D).AlbedoTexture = SkinManager.Instance.Skin.CursorImage;
         (GetActiveMaterial(0) as StandardMaterial3D).AlbedoTexture = SkinManager.Instance.Skin.GridImage;
 
-        Runner.Attempt.HitStateChanged += OnHitStateChanged;
+        Runner.HitResultChanged += onHitResultChanged;
     }
 
-    private void OnHitStateChanged(HitObject obj, HitState state)
+    private void onHitResultChanged(int noteIndex, HitResult result)
     {
-        float lateness = Runner.Attempt.IsReplay ? Runner.Attempt.HitsInfo[obj.Index] : (float)(((int)Runner.Attempt.Progress - Runner.Attempt.Map.Notes[obj.Index].Millisecond) / Runner.Attempt.Speed);
+        float lateness = Runner.Attempt.IsReplay ? Runner.Attempt.HitsInfo[noteIndex] : (float)(((int)Runner.Attempt.Progress - Runner.Attempt.Map.Notes[noteIndex].Millisecond) / Runner.Attempt.Speed);
 		float factor = 1 - Math.Max(0, lateness - 25) / 150f;
         uint hitScore = (uint)(100 * Runner.Attempt.ComboMultiplier * Runner.Attempt.ModsMultiplier * factor * ((Runner.Attempt.Speed - 1) / 2.5 + 1));
 
-        switch (state)
+        switch (result)
         {
-            case HitState.HIT:
-                spawnHitIcon(obj.Index, hitScore);
+            case HitResult.Hit:
+                spawnHitIcon(noteIndex, hitScore);
                 break;
-            case HitState.MISS:
-                spawnMissIcon(obj.Index);
+            case HitResult.Miss:
+                spawnMissIcon(noteIndex);
                 break;
         }
     }

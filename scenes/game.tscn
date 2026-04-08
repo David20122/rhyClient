@@ -94,22 +94,6 @@ resource_local_to_scene = true
 material = SubResource("StandardMaterial3D_4p8vu")
 size = Vector2(10.88, 0.8)
 
-[sub_resource type="ViewportTexture" id="ViewportTexture_bhx41"]
-viewport_path = NodePath("Runner/HUD/ProgressBar/ProgressBarViewport")
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p1h21"]
-resource_local_to_scene = true
-transparency = 1
-shading_mode = 0
-disable_fog = true
-albedo_texture = SubResource("ViewportTexture_bhx41")
-texture_repeat = false
-
-[sub_resource type="QuadMesh" id="QuadMesh_7mook"]
-resource_local_to_scene = true
-material = SubResource("StandardMaterial3D_p1h21")
-size = Vector2(10.88, 0.8)
-
 [sub_resource type="ViewportTexture" id="ViewportTexture_sww3w"]
 viewport_path = NodePath("Runner/HUD/PanelLeft/PanelLeftViewport")
 
@@ -172,6 +156,22 @@ font_size = 50
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_gc8yu"]
 shader = ExtResource("14_3xchs")
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_bhx41"]
+viewport_path = NodePath("Runner/HUD/ProgressBar/ProgressBarViewport")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p1h21"]
+resource_local_to_scene = true
+transparency = 1
+shading_mode = 0
+disable_fog = true
+albedo_texture = SubResource("ViewportTexture_bhx41")
+texture_repeat = false
+
+[sub_resource type="QuadMesh" id="QuadMesh_7mook"]
+resource_local_to_scene = true
+material = SubResource("StandardMaterial3D_p1h21")
+size = Vector2(10.88, 0.8)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_73q55"]
 transparency = 1
@@ -256,7 +256,6 @@ script = ExtResource("2_twgab")
 [node name="Runner" type="Node3D" parent="." unique_id=580620214 node_paths=PackedStringArray("HudManager", "Camera", "Grid", "Cursor", "Notes")]
 script = ExtResource("2_qnb83")
 HudManager = NodePath("HUD")
-NotesOnly = true
 Camera = NodePath("Camera3D")
 Grid = NodePath("HUD/Grid")
 Cursor = NodePath("HUD/Grid/Cursor")
@@ -310,40 +309,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("7_wjg6i")
-expand_mode = 1
-stretch_mode = 1
-
-[node name="ProgressBar" type="MeshInstance3D" parent="Runner/HUD" unique_id=528447019]
-transform = Transform3D(1, 0, 0, 0, 0.965926, -0.258819, 0, 0.258819, 0.965926, 0, 6.3, -10)
-cast_shadow = 0
-mesh = SubResource("QuadMesh_7mook")
-skeleton = NodePath("../../..")
-script = ExtResource("7_gxtfn")
-
-[node name="ProgressBarViewport" type="SubViewport" parent="Runner/HUD/ProgressBar" unique_id=658400463]
-disable_3d = true
-transparent_bg = true
-canvas_item_default_texture_filter = 2
-size = Vector2i(544, 40)
-size_2d_override = Vector2i(1088, 80)
-size_2d_override_stretch = true
-render_target_update_mode = 4
-
-[node name="Background" type="TextureRect" parent="Runner/HUD/ProgressBar/ProgressBarViewport" unique_id=1129572664]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("8_eu3ux")
-
-[node name="Main" type="TextureRect" parent="Runner/HUD/ProgressBar/ProgressBarViewport" unique_id=2016165310]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("9_nde5v")
 expand_mode = 1
 stretch_mode = 1
 
@@ -539,6 +504,40 @@ offset_right = -16.0
 offset_bottom = 2.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="ProgressBar" type="MeshInstance3D" parent="Runner/HUD" unique_id=528447019]
+transform = Transform3D(1, 0, 0, 0, 0.965926, -0.258819, 0, 0.258819, 0.965926, 0, 6.3, -10)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_7mook")
+skeleton = NodePath("../../..")
+script = ExtResource("7_gxtfn")
+
+[node name="ProgressBarViewport" type="SubViewport" parent="Runner/HUD/ProgressBar" unique_id=658400463]
+disable_3d = true
+transparent_bg = true
+canvas_item_default_texture_filter = 2
+size = Vector2i(544, 40)
+size_2d_override = Vector2i(1088, 80)
+size_2d_override_stretch = true
+render_target_update_mode = 4
+
+[node name="Background" type="TextureRect" parent="Runner/HUD/ProgressBar/ProgressBarViewport" unique_id=1129572664]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("8_eu3ux")
+
+[node name="Main" type="TextureRect" parent="Runner/HUD/ProgressBar/ProgressBarViewport" unique_id=2016165310]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("9_nde5v")
+expand_mode = 1
+stretch_mode = 1
 
 [node name="Progress" type="Node3D" parent="Runner/HUD" unique_id=533288593]
 script = ExtResource("21_twgab")

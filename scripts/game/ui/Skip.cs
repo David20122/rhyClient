@@ -9,13 +9,13 @@ public partial class Skip : UIComponent
 	public override void OnExitTree()
     {
         if (Runner.Attempt == null) return;
-		Runner.Attempt.SkipAvailable -= OnSkipAvailable;
+		Runner.SkipAvailable -= OnSkipAvailable;
     }
 
 	public override void Init()
 	{
 		label = GetNode<Label3D>("Label");
-		Runner.Attempt.SkipAvailable += OnSkipAvailable;
+		Runner.SkipAvailable += OnSkipAvailable;
 	}
 
 	public override void Process(double delta, Attempt attempt)

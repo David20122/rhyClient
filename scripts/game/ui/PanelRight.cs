@@ -7,12 +7,14 @@ public partial class PanelRight : UIComponent
 	private Label Accuracy, Hits, Misses, SimpleMisses, Sum;
 	private Tween hitTween;
     private Tween missTween;
+	private float _hitOpacity = 0.62f;
+	private float _missOpacity = 0.62f;
 
 	public override void _ExitTree()
     {
         if (Runner.Attempt == null) return;
-		Runner.Attempt.AttemptStatsUpdated -= OnStatsUpdated;
-		Runner.Attempt.HitStateChanged -= OnHitStateChanged;
+		Runner.AttemptStatsUpdated -= OnStatsUpdated;
+		Runner.HitResultChanged -= OnHitStateChanged;
     }
 
 	public override void Init()
@@ -31,27 +33,36 @@ public partial class PanelRight : UIComponent
 		Hits.LabelSettings.FontColor = Color.Color8(255, 255, 255, 140);
 		Misses.LabelSettings.FontColor = Color.Color8(255, 255, 255, 140);
 
-		Runner.Attempt.AttemptStatsUpdated += OnStatsUpdated;
-		Runner.Attempt.HitStateChanged += OnHitStateChanged;
+		Runner.AttemptStatsUpdated += OnStatsUpdated;
+		Runner.HitResultChanged += OnHitStateChanged;
 	}
 
-	public void OnHitStateChanged(HitObject obj, HitState state)
-	{
-		switch (state)
+    public override void _PhysicsProcess(double delta)
+    {
+		if (_hitOpacity > 0.62f)
 		{
-			case HitState.MISS:
-				Misses.LabelSettings.FontColor = Color.Color8(255, 255, 255, 255);
-				missTween?.Kill();
-				missTween = Misses.CreateTween();
-				missTween.TweenProperty(Misses.LabelSettings, "font_color", Color.Color8(255, 255, 255, 160), 1);
-				missTween.Play();
+			_hitOpacity = Mathf.MoveToward(_hitOpacity, 0.62f, (float)delta * 1.5f);
+			Hits.Modulate = new Color(1,1,1,_hitOpacity);
+		}
+
+        if (_missOpacity > 0.62f)
+		{
+			_missOpacity = Mathf.MoveToward(_missOpacity, 0.62f, (float)delta * 1.5f);
+			Misses.Modulate = new Color(1,1,1,_missOpacity);
+		}
+    }
+
+	public void OnHitStateChanged(int noteIndex, HitResult result)
+	{
+		switch (result)
+		{
+			case HitResult.Miss:
+				_missOpacity = 1.0f;
+				Misses.Modulate = new Color(1,1,1,1.0f);
 				break;
-			case HitState.HIT:
-				Hits.LabelSettings.FontColor = Color.Color8(255, 255, 255, 255);
-				hitTween?.Kill();
-				hitTween = Hits.CreateTween();
-				hitTween.TweenProperty(Hits.LabelSettings, "font_color", Color.Color8(255, 255, 255, 160), 1);
-				hitTween.Play();
+			case HitResult.Hit:
+				_hitOpacity = 1.0f;
+				Hits.Modulate = new Color(1,1,1,1.0f);
 				break;
 		}
 	}

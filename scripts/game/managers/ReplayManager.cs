@@ -7,7 +7,16 @@ using System.Security.Cryptography;
 
 public partial class ReplayManager : Node
 {
+	public enum Mode
+	{
+		NONE,
+		RECORD,
+		PLAYBACK
+	}
+
 	[Export] public Runner Runner { get; set; }
+	[Export] public Mode CurrentMode {get; set; }
+
 	private FileAccess _file;
 	private ulong statusOffset, frameCountOffset;
 

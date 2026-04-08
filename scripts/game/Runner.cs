@@ -9,6 +9,10 @@ using System.Security.Cryptography;
 
 public partial class Runner : Node3D
 {
+	[Signal] public delegate void AttemptStatsUpdatedEventHandler(Attempt attempt);
+	[Signal] public delegate void SkipAvailableEventHandler(Attempt attempt);
+	[Signal] public delegate void HitResultChangedEventHandler(int noteIndex, HitResult hitResult);
+
 	[Export] public HudManager HudManager;
 
 	public Attempt Attempt;
@@ -57,96 +61,96 @@ public partial class Runner : Node3D
 		if (!Playing) return;
 		Attempt.Progress += delta * 1000 * Attempt.Speed;
 
-		// if (Attempt.IsReplay)
-		// {
-		// 	// if (!replayViewerSeekHovered || !leftMouseButtonDown)
-		// 	// {
-		// 	// 	replayViewerSeek.Value = Attempt.Progress / Attempt.LongestReplayLength;
-		// 	// }
+		if (Attempt.IsReplay)
+		{
+			// if (!replayViewerSeekHovered || !leftMouseButtonDown)
+			// {
+			// 	replayViewerSeek.Value = Attempt.Progress / Attempt.LongestReplayLength;
+			// }
 
-		// 	Vector2 positionSum = new();
+			Vector2 positionSum = new();
 
-		// 	for (int i = 0; i < Attempt.Replays.Length; i++)
-		// 	{
-		// 		for (int j = Attempt.Replays[i].FrameIndex; j < Attempt.Replays[i].Frames.Length; j++)
-		// 		{
-		// 			if (Attempt.Progress < Attempt.Replays[i].Frames[j].Progress)
-		// 			{
-		// 				Attempt.Replays[i].FrameIndex = Math.Max(0, j - 1);
-		// 				break;
-		// 			}
-		// 		}
+			for (int i = 0; i < Attempt.Replays.Length; i++)
+			{
+				for (int j = Attempt.Replays[i].FrameIndex; j < Attempt.Replays[i].Frames.Length; j++)
+				{
+					if (Attempt.Progress < Attempt.Replays[i].Frames[j].Progress)
+					{
+						Attempt.Replays[i].FrameIndex = Math.Max(0, j - 1);
+						break;
+					}
+				}
 
-		// 		int next = Math.Min(Attempt.Replays[i].FrameIndex + 1, Attempt.Replays[i].Frames.Length - 2);
+				int next = Math.Min(Attempt.Replays[i].FrameIndex + 1, Attempt.Replays[i].Frames.Length - 2);
 
-		// 		if (!Attempt.Replays[i].Complete && Attempt.Progress >= Attempt.Replays[i].Length)
-		// 		{
-		// 			Attempt.Replays[i].Complete = true;
-		// 			Attempt.Replays[i].LastNote = Attempt.PassedNotes;
+				if (!Attempt.Replays[i].Complete && Attempt.Progress >= Attempt.Replays[i].Length)
+				{
+					Attempt.Replays[i].Complete = true;
+					Attempt.Replays[i].LastNote = Attempt.PassedNotes;
 
-		// 			// Tween tween = Cursors[i].CreateTween();
-		// 			// tween.TweenProperty(Cursors[i], "transparency", 1, 1).SetTrans(Tween.TransitionType.Quad);
-		// 			// tween.Play();
-		// 		}
+					// Tween tween = Cursors[i].CreateTween();
+					// tween.TweenProperty(Cursors[i], "transparency", 1, 1).SetTrans(Tween.TransitionType.Quad);
+					// tween.Play();
+				}
 
-		// 		double inverse = Mathf.InverseLerp(Attempt.Replays[i].Frames[Attempt.Replays[i].FrameIndex].Progress, Attempt.Replays[i].Frames[next].Progress, Attempt.Progress);
-		// 		Vector2 cursorPos = Attempt.Replays[i].Frames[Attempt.Replays[i].FrameIndex].CursorPosition.Lerp(Attempt.Replays[i].Frames[next].CursorPosition, (float)Math.Clamp(inverse, 0, 1));
+				double inverse = Mathf.InverseLerp(Attempt.Replays[i].Frames[Attempt.Replays[i].FrameIndex].Progress, Attempt.Replays[i].Frames[next].Progress, Attempt.Progress);
+				Vector2 cursorPos = Attempt.Replays[i].Frames[Attempt.Replays[i].FrameIndex].CursorPosition.Lerp(Attempt.Replays[i].Frames[next].CursorPosition, (float)Math.Clamp(inverse, 0, 1));
 
-		// 		try
-		// 		{
-		// 			//Cursors[i].Position = new(cursorPos.X, cursorPos.Y, 0);
-		// 		}
-		// 		catch {}	// dnc
+				try
+				{
+					//Cursors[i].Position = new(cursorPos.X, cursorPos.Y, 0);
+				}
+				catch {}	// dnc
 
-		// 		Attempt.Replays[i].CurrentPosition = cursorPos;
-		// 		positionSum += cursorPos;
-		// 	}
+				Attempt.Replays[i].CurrentPosition = cursorPos;
+				positionSum += cursorPos;
+			}
 
-		// 	Vector2 averagePosition = positionSum / Attempt.Replays.Length;
-		// 	Vector2 mouseDelta = averagePosition - Attempt.CursorPosition;
+			Vector2 averagePosition = positionSum / Attempt.Replays.Length;
+			Vector2 mouseDelta = averagePosition - Attempt.CursorPosition;
 
-		// 	if (Attempt.Mods["Spin"])
-		// 	{
-		// 		mouseDelta *= new Vector2(1, -1) / (float)Attempt.Replays[0].Sensitivity * 106;	// idk lol
-		// 	}
+			if (Attempt.Mods["Spin"])
+			{
+				mouseDelta *= new Vector2(1, -1) / (float)Attempt.Replays[0].Sensitivity * 106;	// idk lol
+			}
 
-		// 	//UpdateCursor(mouseDelta);
+			//UpdateCursor(mouseDelta);
 
-		// 	Attempt.CursorPosition = averagePosition;
+			Attempt.CursorPosition = averagePosition;
 
-		// 	if (Attempt.Replays.Length == 1 && Attempt.Replays[0].SkipIndex < Attempt.Replays[0].Skips.Length && Attempt.Progress >= Attempt.Replays[0].Skips[Attempt.Replays[0].SkipIndex])
-		// 	{
-		// 		Attempt.Replays[0].SkipIndex++;
-		// 		Skip();
-		// 	}
+			if (Attempt.Replays.Length == 1 && Attempt.Replays[0].SkipIndex < Attempt.Replays[0].Skips.Length && Attempt.Progress >= Attempt.Replays[0].Skips[Attempt.Replays[0].SkipIndex])
+			{
+				Attempt.Replays[0].SkipIndex++;
+				Skip();
+			}
 
-		// 	int complete = 0;
+			int complete = 0;
 
-		// 	foreach (Replay replay in Attempt.Replays)
-		// 	{
-		// 		if (replay.Complete)
-		// 		{
-		// 			complete++;
-		// 		}
-		// 	}
+			foreach (Replay replay in Attempt.Replays)
+			{
+				if (replay.Complete)
+				{
+					complete++;
+				}
+			}
 
-		// 	if (complete == Attempt.Replays.Length)
-		// 	{
-		// 		QueueStop();
-		// 	}
-		// }
-		// else if (!Attempt.Stopped && settings.RecordReplays && !Attempt.Map.Ephemeral && now - Attempt.LastReplayFrame >= 1000000/60)	// 60hz
-		// {
-		// 	if (Attempt.ReplayFrames.Count == 0 || (Attempt.ReplayFrames[^1][1 .. 2] != new float[]{Attempt.CursorPosition.X, Attempt.CursorPosition.Y}))
-		// 	{
-		// 		Attempt.LastReplayFrame = now;
-		// 		Attempt.ReplayFrames.Add([
-		// 			(float)Attempt.Progress,
-		// 			Attempt.CursorPosition.X,
-		// 			Attempt.CursorPosition.Y
-		// 		]);
-		// 	}
-		// }
+			if (complete == Attempt.Replays.Length)
+			{
+				QueueStop();
+			}
+		}
+		else if (!Attempt.Stopped && settings.RecordReplays && !Attempt.Map.Ephemeral && now - Attempt.LastReplayFrame >= 1000000/60)	// 60hz
+		{
+			if (Attempt.ReplayFrames.Count == 0 || (Attempt.ReplayFrames[^1][1 .. 2] != new float[]{Attempt.CursorPosition.X, Attempt.CursorPosition.Y}))
+			{
+				Attempt.LastReplayFrame = now;
+				Attempt.ReplayFrames.Add([
+					(float)Attempt.Progress,
+					Attempt.CursorPosition.X,
+					Attempt.CursorPosition.Y
+				]);
+			}
+		}
 
 		Cursor.RotationDegrees += Vector3.Back * settings.CursorRotation * (float)delta;
 
@@ -177,7 +181,7 @@ public partial class Runner : Node3D
 				if (!Attempt.CanSkip)
 				{
 					Attempt.CanSkip = true;
-					Attempt.EmitSignal(Attempt.SignalName.SkipAvailable, Attempt);
+					EmitSignal(SignalName.SkipAvailable, Attempt);
 				}
 			}
 		}
@@ -205,9 +209,9 @@ public partial class Runner : Node3D
 			{
 				if (i + 1 > Attempt.PassedNotes)
 				{
-					if (Attempt.IsReplay && Attempt.Replays.Length <= 1 && Attempt.Replays[0].Notes[note.Index] == -1 || !Attempt.IsReplay && note.HitState != HitState.HIT)
+					if (Attempt.IsReplay && Attempt.Replays.Length <= 1 && Attempt.Replays[0].Notes[note.Index] == -1 || !Attempt.IsReplay && note.LastResult != HitResult.Hit)
 					{
-						note.Miss(Attempt);
+						note.Miss(this);
 					}
 
 					Attempt.PassedNotes = i + 1;
@@ -222,7 +226,7 @@ public partial class Runner : Node3D
 			{
 				break;
 			}
-			else if (note.HitState == HitState.HIT) // no point
+			else if (note.LastResult == HitResult.Hit) // no point
 			{
 				continue;
 			}
@@ -242,19 +246,22 @@ public partial class Runner : Node3D
 		for (int i = 0; i < ToProcess; i++)
 		{
 			Note note = ProcessNotes[i];
-			if (note.HitState == HitState.HIT) continue;
+			if (note.LastResult == HitResult.Hit) continue;
 
 			if (!Attempt.IsReplay)
 			{
-				if (note.Millisecond - Attempt.Progress > 0)
+				if (note.Millisecond - Attempt.Progress > 0) continue;
+
+				var result = note.CheckHitResult(Attempt);
+				if (result == HitResult.Hit)
 				{
-					continue;
+					note.Hit(this);
 				}
-				note.CheckHit(Attempt, note);
+
 			}
 			else if (Attempt.Replays.Length > 1 && note.Millisecond - Attempt.Progress <= 0 || Attempt.Replays[0].Notes[note.Index] != -1 && note.Millisecond - Attempt.Progress + Attempt.Replays[0].Notes[note.Index] * Attempt.Speed <= 0)
 			{
-				note.Hit(Attempt);
+				note.Hit(this);
 			}
 		}
 
@@ -272,21 +279,22 @@ public partial class Runner : Node3D
 		}
 	}
 
-	public void HitStateChanged(HitObject hitObject, HitState hitState)
+	public void OnHitResultChanged(int noteIndex, HitResult hitResult)
 	{
-		float lateness = Attempt.IsReplay ? Attempt.HitsInfo[hitObject.Index] : (float)(((int)Attempt.Progress - Attempt.Map.Notes[hitObject.Index].Millisecond) / Attempt.Speed);
+		float lateness = Attempt.IsReplay ? Attempt.HitsInfo[noteIndex] : (float)(((int)Attempt.Progress - Attempt.Map.Notes[noteIndex].Millisecond) / Attempt.Speed);
 		float factor = 1 - Math.Max(0, lateness - 25) / 150f;
 		uint hitScore = (uint)(100 * Attempt.ComboMultiplier * Attempt.ModsMultiplier * factor * ((Attempt.Speed - 1) / 2.5 + 1));
 		
-		switch (hitState)
+		switch (hitResult)
 		{
-			case HitState.HIT:
+			case HitResult.Hit:
+				SoundManager.HitSound.Play();
 				Attempt.Hits++;
 				Attempt.Sum++;
 				Attempt.Accuracy = Math.Floor((float)Attempt.Hits / Attempt.Sum * 10000) / 100;
 				Attempt.Combo++;
 				Attempt.ComboMultiplierProgress++;
-				Attempt.LastHitColour = SkinManager.Instance.Skin.NoteColors[hitObject.Index % SkinManager.Instance.Skin.NoteColors.Length];
+				Attempt.LastHitColour = SkinManager.Instance.Skin.NoteColors[noteIndex % SkinManager.Instance.Skin.NoteColors.Length];
 				Attempt.Score += hitScore;
 				Attempt.HealthStep = Math.Max(Attempt.HealthStep / 1.45, 15);
 				Attempt.Health = Math.Min(100, Attempt.Health + Attempt.HealthStep / 1.75);
@@ -294,7 +302,7 @@ public partial class Runner : Node3D
 				{
 					Stats.NotesHit++;
 					if (Attempt.Combo > Stats.HighestCombo) Stats.HighestCombo = Attempt.Combo;
-					Attempt.HitsInfo[hitObject.Index] = lateness;
+					Attempt.HitsInfo[noteIndex] = lateness;
 				}
 				if (Attempt.ComboMultiplierProgress == Attempt.ComboMultiplierIncrement)
 				{
@@ -305,7 +313,8 @@ public partial class Runner : Node3D
 					}
 				}
 				break;
-			case HitState.MISS:
+			case HitResult.Miss:
+				SoundManager.MissSound.Play();
 				Attempt.Misses++;
 				Attempt.Sum++;
 				Attempt.Accuracy = Mathf.Floor((float)Attempt.Hits / Attempt.Sum * 10000) / 100;
@@ -317,7 +326,7 @@ public partial class Runner : Node3D
 				if (!Attempt.IsReplay)
 				{
 					Stats.NotesMissed++;
-					Attempt.HitsInfo[hitObject.Index] = -1;
+					Attempt.HitsInfo[noteIndex] = -1;
 				}
 				if (!Attempt.IsReplay && Attempt.Health <= 0 && Attempt.Alive)
 				{
@@ -333,7 +342,7 @@ public partial class Runner : Node3D
 				break;
 		}
 
-		Attempt.EmitSignal(Attempt.SignalName.AttemptStatsUpdated, Attempt);
+		EmitSignal(SignalName.AttemptStatsUpdated, Attempt);
 	}
 
 	public void Play()
@@ -344,7 +353,7 @@ public partial class Runner : Node3D
 		{
 			HudManager.Init();
 			Attempt.TimeStarted = Time.GetTicksUsec();
-			Attempt.HitStateChanged += HitStateChanged;
+			HitResultChanged += OnHitResultChanged;
 		}
 
 		settings = SettingsManager.Instance.Settings;
