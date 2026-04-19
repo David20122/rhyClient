@@ -7,6 +7,7 @@ public partial class GameScene : BaseScene
 {
 	[Export] public Runner Runner;
 	[Export] public Panel Menu;
+	[Export] public ReplayManager ReplayManager;
 	public static Attempt Attempt;
 
 	public bool MenuShown = false;
@@ -58,6 +59,25 @@ public partial class GameScene : BaseScene
 		};
 		
 		Runner.Attempt = Attempt;
+		GD.Print(Runner.Attempt.ID);
+
+		GD.Print(Runner.Attempt.IsReplay);
+		if (Runner.Attempt.IsReplay)
+		{
+			GD.Print("set");
+			ReplayManager.CurrentMode = ReplayManager.Mode.PLAYBACK;
+		}
+		else if (Runner.Attempt.Settings.RecordReplays)
+		{
+			ReplayManager.NewReplay(Runner.Attempt);
+			ReplayManager.CurrentMode = ReplayManager.Mode.RECORD;
+		}
+		// else if (!Runner.Attempt.IsReplay && !Runner.Attempt.Settings.RecordReplays)
+		else
+		{
+			GD.Print("set none");
+			ReplayManager.CurrentMode = ReplayManager.Mode.NONE;
+		}
     	Runner.Play();
 	}
 
@@ -90,6 +110,16 @@ public partial class GameScene : BaseScene
 		Attempt = new Attempt(map, oldAttempt.Speed, oldAttempt.StartFrom, oldAttempt.Mods, oldAttempt.Players, oldAttempt.Replays);
 
 		SceneManager.ReloadCurrentScene();
+	}
+
+	public override void _Process(double delta)
+	{
+		if (ReplayManager.CurrentMode == ReplayManager.Mode.PLAYBACK)
+		{
+			GD.Print($"x: {ReplayManager.CursorPos.X}, y: {ReplayManager.CursorPos.Y}");
+			Runner.Cursor.Position = new Vector3(ReplayManager.CursorPos.X , ReplayManager.CursorPos.Y, 0);
+			
+		}
 	}
 
 	public override void _Input(InputEvent @event)

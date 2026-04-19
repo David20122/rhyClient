@@ -17,6 +17,8 @@ public partial class ReplayManager : Node
 	[Export] public Runner Runner { get; set; }
 	[Export] public Mode CurrentMode {get; set; }
 
+	public Vector2 CursorPos;
+
 	private FileAccess _file;
 	private ulong statusOffset, frameCountOffset;
 
@@ -65,7 +67,7 @@ public partial class ReplayManager : Node
 
 	public void SaveReplay(Attempt attempt)
 	{
-		var settings = attempt.Settings;
+		// var settings = attempt.Settings;
 
 		_file.Seek(statusOffset);
 		_file.Store8((byte)(attempt.Alive ? (attempt.Qualifies ? 0 : 1) : 2));
@@ -101,8 +103,57 @@ public partial class ReplayManager : Node
 		_file.Close();
 	}
 
+	public override void _Ready()
+	{
+		base._Ready();
+
+	}
+
 	public override void _Process(double delta)
 	{
-		
+
+		/*
+		fog here!
+
+		this is all barebones and copied and pasted just to observe functionality
+		i will write functions for this maybe either in ReplayManager, or in GameScene.cs
+		for now, i got simple cursor movement working so we can go off that as a base
+
+		the replay system are meant to be done for multiple replays
+		lowkey want to scrap that since it overcomplicates things + better off being an external tool
+		sorry nyu :(
+
+		anyways, had to speedrun some stupid functionality and hacks but replay cursor movement works, saving still broken
+		*/
+	
+		if (Runner.Attempt.IsReplay)
+		{
+			for (int i = 0; i < Runner.Attempt.Replays.Length; i++)
+			{
+				var replay = Runner.Attempt.Replays[i];
+				for (int j = Runner.Attempt.Replays[i].FrameIndex; j < Runner.Attempt.Replays[i].Frames.Length; j++)
+				{
+					if (Runner.Attempt.Progress < Runner.Attempt.Replays[i].Frames[j].Progress)
+					{
+						Runner.Attempt.Replays[i].FrameIndex = Math.Max(0, j - 1);
+						break;
+					}
+				}
+			
+				// int next = Math.Min(Runner.Attempt.Replays[i].FrameIndex + 1, Runner.Attempt.Replays[i].Frames.Length - 2);
+
+				// double inverse = Mathf.InverseLerp(Runner.Attempt.Replays[i].Frames[Runner.Attempt.Replays[i].FrameIndex].Progress, Runner.Attempt.Replays[i].Frames[next].Progress, Runner.Attempt.Progress);
+				// Vector2 cursorPos = Runner.Attempt.Replays[i].Frames[Runner.Attempt.Replays[i].FrameIndex].CursorPosition.Lerp(Runner.Attempt.Replays[i].Frames[next].CursorPosition, (float)Math.Clamp(inverse, 0, 1));
+
+				int next = Math.Min(replay.FrameIndex + 1, replay.Frames.Length - 2);
+
+				double inverse = Mathf.InverseLerp(replay.Frames[replay.FrameIndex].Progress, replay.Frames[next].Progress, Runner.Attempt.Progress);
+				Vector2 cursorPos = replay.Frames[replay.FrameIndex].CursorPosition.Lerp(replay.Frames[next].CursorPosition, (float)Math.Clamp(inverse, 0, 1));
+
+				CursorPos = cursorPos;
+
+			}
+		}
+
 	}
 }
