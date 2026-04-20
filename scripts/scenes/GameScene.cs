@@ -7,6 +7,7 @@ public partial class GameScene : BaseScene
 {
 	[Export] public Runner Runner;
 	[Export] public Panel Menu;
+	[Export] public ReplayManager ReplayManager;
 	public static Attempt Attempt;
 
 	public bool MenuShown = false;
@@ -58,6 +59,25 @@ public partial class GameScene : BaseScene
 		};
 		
 		Runner.Attempt = Attempt;
+		GD.Print(Runner.Attempt.ID);
+
+		GD.Print(Runner.Attempt.IsReplay);
+		if (Runner.Attempt.IsReplay)
+		{
+			GD.Print("set");
+			ReplayManager.CurrentMode = ReplayManager.Mode.PLAYBACK;
+		}
+		else if (Runner.Attempt.Settings.RecordReplays)
+		{
+			ReplayManager.NewReplay(Runner.Attempt);
+			ReplayManager.CurrentMode = ReplayManager.Mode.RECORD;
+		}
+		// else if (!Runner.Attempt.IsReplay && !Runner.Attempt.Settings.RecordReplays)
+		else
+		{
+			GD.Print("set none");
+			ReplayManager.CurrentMode = ReplayManager.Mode.NONE;
+		}
     	Runner.Play();
 	}
 
@@ -90,6 +110,14 @@ public partial class GameScene : BaseScene
 		Attempt = new Attempt(map, oldAttempt.Speed, oldAttempt.StartFrom, oldAttempt.Mods, oldAttempt.Players, oldAttempt.Replays);
 
 		SceneManager.ReloadCurrentScene();
+	}
+
+	public override void _Process(double delta)
+	{
+		if (ReplayManager.CurrentMode == ReplayManager.Mode.PLAYBACK)
+		{
+			ReplayManager.UpdateReplayCursor(Attempt);
+		}
 	}
 
 	public override void _Input(InputEvent @event)
@@ -202,7 +230,7 @@ public partial class GameScene : BaseScene
 			}
 
 			Runner.Cursor.Position = new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0);
-			Runner.Camera.Position = new Vector3(0, 0, 3.75f) + new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0) * (float)(Attempt.IsReplay ? Attempt.Replays[0].Parallax : Attempt.Settings.CameraParallax);
+			Runner.Camera.Position = new Vector3(0, 0, 3.75f) + new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0) * (float)Attempt.Settings.CameraParallax;
 			Runner.Camera.Rotation = Vector3.Zero;
 
 			//videoQuad.Position = new Vector3(Camera.Position.X, Camera.Position.Y, -100);

@@ -243,15 +243,17 @@ Button/styles/hover = SubResource("StyleBoxFlat_6kbgk")
 Button/styles/normal = SubResource("StyleBoxEmpty_jlnvv")
 Button/styles/pressed = SubResource("StyleBoxFlat_y08lf")
 
-[node name="SceneGame" type="Node" unique_id=909809067 node_paths=PackedStringArray("Runner", "Menu")]
+[node name="SceneGame" type="Node" unique_id=909809067 node_paths=PackedStringArray("Runner", "Menu", "ReplayManager")]
 script = ExtResource("1_bhx41")
 Runner = NodePath("Runner")
 Menu = NodePath("Menu")
+ReplayManager = NodePath("ReplayManager")
 UseGameSpace = true
 AddSpaceAsChild = true
 
-[node name="ReplayManager" type="Node" parent="." unique_id=40137833]
+[node name="ReplayManager" type="Node" parent="." unique_id=40137833 node_paths=PackedStringArray("Runner")]
 script = ExtResource("2_twgab")
+Runner = NodePath("../Runner")
 
 [node name="Runner" type="Node3D" parent="." unique_id=580620214 node_paths=PackedStringArray("HudManager", "Camera", "Grid", "Cursor", "Notes")]
 script = ExtResource("2_qnb83")

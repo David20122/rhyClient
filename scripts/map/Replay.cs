@@ -12,6 +12,8 @@ public struct Replay
     public string MapFilePath;
     public ulong ReplayNoteCount;
     public string Player;
+
+    // \/ this bad VERY bad, need to use godot's binary functions later
     public FileParser FileBuffer;
     public bool Valid;
     public float Length;
@@ -59,7 +61,7 @@ public struct Replay
         LastFrame = 0;
 
         byte[] bytes = FileBuffer.Get((int)FileBuffer.Length - 32);
-
+        // crc32 is faster, will also change later
         if (SHA256.HashData(bytes).Stringify() != FileBuffer.Get(32).Stringify())
         {
             Valid = false;
