@@ -62,88 +62,6 @@ public partial class Runner : Node3D
 		if (!Playing) return;
 		Attempt.Progress += delta * 1000 * Attempt.Speed;
 
-		// if (Attempt.IsReplay)
-		// {
-		// 	// if (!replayViewerSeekHovered || !leftMouseButtonDown)
-		// 	// {
-		// 	// 	replayViewerSeek.Value = Attempt.Progress / Attempt.LongestReplayLength;
-		// 	// }
-
-		// 	Vector2 positionSum = new();
-
-		// 	for (int i = 0; i < Attempt.Replays.Length; i++)
-		// 	{
-		// 		for (int j = Attempt.Replays[i].FrameIndex; j < Attempt.Replays[i].Frames.Length; j++)
-		// 		{
-		// 			if (Attempt.Progress < Attempt.Replays[i].Frames[j].Progress)
-		// 			{
-		// 				Attempt.Replays[i].FrameIndex = Math.Max(0, j - 1);
-		// 				break;
-		// 			}
-		// 		}
-
-		// 		int next = Math.Min(Attempt.Replays[i].FrameIndex + 1, Attempt.Replays[i].Frames.Length - 2);
-
-		// 		if (!Attempt.Replays[i].Complete && Attempt.Progress >= Attempt.Replays[i].Length)
-		// 		{
-		// 			Attempt.Replays[i].Complete = true;
-		// 			Attempt.Replays[i].LastNote = Attempt.PassedNotes;
-
-		// 			// Tween tween = Cursors[i].CreateTween();
-		// 			// tween.TweenProperty(Cursors[i], "transparency", 1, 1).SetTrans(Tween.TransitionType.Quad);
-		// 			// tween.Play();
-		// 		}
-
-		// 		double inverse = Mathf.InverseLerp(Attempt.Replays[i].Frames[Attempt.Replays[i].FrameIndex].Progress, Attempt.Replays[i].Frames[next].Progress, Attempt.Progress);
-		// 		Vector2 cursorPos = Attempt.Replays[i].Frames[Attempt.Replays[i].FrameIndex].CursorPosition.Lerp(Attempt.Replays[i].Frames[next].CursorPosition, (float)Math.Clamp(inverse, 0, 1));
-
-		// 		try
-		// 		{
-		// 			// Cursors[i].Position = new(cursorPos.X, cursorPos.Y, 0);
-		// 		}
-		// 		catch {}	// dnc
-
-		// 		Attempt.Replays[i].CurrentPosition = cursorPos;
-		// 		positionSum += cursorPos;
-		// 	}
-
-		// 	Vector2 averagePosition = positionSum / Attempt.Replays.Length;
-		// 	Vector2 mouseDelta = averagePosition - Attempt.CursorPosition;
-
-		// 	if (Attempt.Mods["Spin"])
-		// 	{
-		// 		mouseDelta *= new Vector2(1, -1) / (float)Attempt.Replays[0].Sensitivity * 106;	// idk lol
-		// 	}
-
-			
-
-			//UpdateCursor(mouseDelta);
-
-			// Attempt.CursorPosition = averagePosition;
-
-			// if (Attempt.Replays.Length == 1 && Attempt.Replays[0].SkipIndex < Attempt.Replays[0].Skips.Length && Attempt.Progress >= Attempt.Replays[0].Skips[Attempt.Replays[0].SkipIndex])
-			// {
-			// 	Attempt.Replays[0].SkipIndex++;
-			// 	Skip();
-			// }
-
-		// 	int complete = 0;
-
-		// 	foreach (Replay replay in Attempt.Replays)
-		// 	{
-		// 		if (replay.Complete)
-		// 		{
-		// 			complete++;
-		// 		}
-		// 	}
-
-		// 	if (complete == Attempt.Replays.Length)
-		// 	{
-		// 		QueueStop();
-		// 	}
-		// }
-
-
 		// if not paused & record replays on & not a temporary map & time from now and last replay frame was 60 frames apart
 		if (!Attempt.Stopped && settings.RecordReplays && !Attempt.Map.Ephemeral && now - Attempt.LastReplayFrame >= 1000000/60)
 		{
@@ -219,14 +137,16 @@ public partial class Runner : Node3D
 					{
 						note.Miss(this);
 					}
-
 					Attempt.PassedNotes = i + 1;
 				}
 
-				if (!Attempt.IsReplay)
-				{
-					continue;
-				}
+				continue;
+
+				// if (!Attempt.IsReplay)
+				// {
+				// 	continue;
+				// }
+
 			}
 			else if (note.Millisecond > Attempt.Progress + at * 1000 * Attempt.Speed)   // past approach distance
 			{
