@@ -126,7 +126,7 @@ public partial class ReplayManager : Node
 		anyways, had to speedrun some stupid functionality and hacks but replay cursor movement works, saving still broken
 		*/
 	
-		if (Runner.Attempt.IsReplay)
+		if (Runner.Attempt.IsReplay && Runner.Playing)
 		{
 			for (int i = 0; i < Runner.Attempt.Replays.Length; i++)
 			{
@@ -154,6 +154,60 @@ public partial class ReplayManager : Node
 
 			}
 		}
+	}
 
+	public void UpdateReplayCursor(Attempt Attempt)
+	{
+		if (Attempt.IsReplay)
+		{
+			// Reset everything to zero so it doesn't spin endlessly, or have infinite sensitivity
+			Runner.Camera.Rotation = Vector3.Zero;
+			Attempt.RawCursorPosition = Vector2.Zero;
+			Attempt.CursorPosition = Vector2.Zero;
+		}
+
+		if (!Runner.SpinCamera)
+		{
+			if (Attempt.Settings.CursorDrift)
+			{
+				Attempt.CursorPosition = CursorPos.Clamp(-Constants.BOUNDS, Constants.BOUNDS);
+			}
+			else
+			{
+				Attempt.RawCursorPosition = CursorPos;
+				Attempt.CursorPosition = Attempt.RawCursorPosition.Clamp(-Constants.BOUNDS, Constants.BOUNDS);
+			}
+
+			Runner.Cursor.Position = new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0);
+			Runner.Camera.Position = new Vector3(0, 0, 3.75f) + new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0) * (float)Attempt.Replays[0].Parallax;
+			Runner.Camera.Rotation = Vector3.Zero;
+
+			//videoQuad.Position = new Vector3(Camera.Position.X, Camera.Position.Y, -100);
+		}
+		else
+		{
+			Runner.Camera.Rotation += new Vector3(CursorPos.Y / (float)Math.PI, -CursorPos.X / (float)Math.PI, 0);
+
+			Runner.Camera.Rotation = new Vector3((float)Math.Clamp(Runner.Camera.Rotation.X, Mathf.DegToRad(-90), Mathf.DegToRad(90)), Runner.Camera.Rotation.Y, Runner.Camera.Rotation.Z);
+
+			Vector3 Origin = new Vector3(0,0,3.5f);
+			Vector3 CursorLock = new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0);
+			// The pivot is to mimic ROBLOX's orbital camera
+			Vector3 Pivot = Runner.Camera.Basis.Z / 4f;
+
+			Runner.Camera.Position = Origin + CursorLock * Attempt.Settings.CameraParallax + Pivot;
+
+			Vector3 LookVector = Runner.Camera.Basis.Z;
+			Vector2 CameraVec2 = new Vector2(Runner.Camera.Position.X, Runner.Camera.Position.Y);
+			Vector2 LookVec2 = new Vector2(LookVector.X, LookVector.Y);
+
+			Attempt.RawCursorPosition = CameraVec2 - LookVec2 * Mathf.Abs(Runner.Camera.Position.Z / LookVector.Z);
+
+			Attempt.CursorPosition = Attempt.RawCursorPosition.Clamp(-Constants.BOUNDS, Constants.BOUNDS);
+			Runner.Cursor.Position = new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0);
+
+			//videoQuad.Position = Camera.Position - Camera.Basis.Z * 103.75f;
+			//videoQuad.Rotation = Camera.Rotation;
+		}
 	}
 }

@@ -116,9 +116,7 @@ public partial class GameScene : BaseScene
 	{
 		if (ReplayManager.CurrentMode == ReplayManager.Mode.PLAYBACK)
 		{
-			GD.Print($"x: {ReplayManager.CursorPos.X}, y: {ReplayManager.CursorPos.Y}");
-			Runner.Cursor.Position = new Vector3(ReplayManager.CursorPos.X , ReplayManager.CursorPos.Y, 0);
-			
+			ReplayManager.UpdateReplayCursor(Attempt);
 		}
 	}
 
@@ -232,7 +230,7 @@ public partial class GameScene : BaseScene
 			}
 
 			Runner.Cursor.Position = new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0);
-			Runner.Camera.Position = new Vector3(0, 0, 3.75f) + new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0) * (float)(Attempt.IsReplay ? Attempt.Replays[0].Parallax : Attempt.Settings.CameraParallax);
+			Runner.Camera.Position = new Vector3(0, 0, 3.75f) + new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0) * (float)Attempt.Settings.CameraParallax;
 			Runner.Camera.Rotation = Vector3.Zero;
 
 			//videoQuad.Position = new Vector3(Camera.Position.X, Camera.Position.Y, -100);
