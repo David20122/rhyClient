@@ -71,12 +71,12 @@ public partial class GameScene : BaseScene
 			GD.Print("Replay Mode: record");
 			ReplayManager.CurrentMode = ReplayManager.Mode.RECORD;
 		}
-		// else if (!Runner.Attempt.IsReplay && !Runner.Attempt.Settings.RecordReplays)
 		else
 		{
 			GD.Print("Replay Mode: none");
 			ReplayManager.CurrentMode = ReplayManager.Mode.NONE;
 		}
+		
     	Runner.Play();
 		ReplayManager.InitReplayLength();
 	}
@@ -172,8 +172,11 @@ public partial class GameScene : BaseScene
 					if (Attempt.IsReplay)
 					{
 						Runner.Playing = !Runner.Playing;
-						SoundManager.Song.PitchScale = Runner.Playing ? (float)Attempt.Speed : 0.00000000000001f;	// ooohh my goood
-						//replayViewerPause.TextureNormal = GD.Load<Texture2D>(Playing ? "res://textures/ui/pause.png" : "res://textures/ui/play.png");
+						SoundManager.Song.PitchScale = (float)Attempt.Speed;
+						SoundManager.Song.StreamPaused = !Runner.Playing;
+
+						string texturePath = Runner.Playing ? "res://textures/ui/pause.png" : "res://textures/ui/play.png";
+						ReplayManager.SeekerPause.TextureNormal = GD.Load<Texture2D>(texturePath);
 					}
 					else
 					{
@@ -266,7 +269,10 @@ public partial class GameScene : BaseScene
 	{
 		MenuShown = show;
 		Runner.Playing = !MenuShown;
-		SoundManager.Song.PitchScale = Runner.Playing ? (float)Attempt.Speed : 0.00000000000001f;	// not again
+		
+		// rest in peace 0.000000000000000001f pitch scale -fog
+		SoundManager.Song.PitchScale = (float)Attempt.Speed;
+		SoundManager.Song.StreamPaused = !Runner.Playing;
 
 		MenuCursor.Instance.UpdateVisible(MenuShown && SettingsManager.Instance.Settings.UseCursorInMenus.Value);
 

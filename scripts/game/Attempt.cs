@@ -53,11 +53,9 @@ public partial class Attempt : GodotObject
 	public double DistanceMM = 0;
 
 	public ulong FirstNote;
-	// public FileAccess ReplayFile;
 	public string ReplayPath;
 	public Replay? Replay { get; set; }
 	public Replay[] Replays;
-	public float ReplayLength;
 	public List<float[]> ReplayFrames = [];
 	public List<float> ReplaySkips = [];
 	public ulong LastReplayFrame = 0;
@@ -89,11 +87,6 @@ public partial class Attempt : GodotObject
 					FirstNote = (ulong)note.Index + 1;
 				}
 			}
-		}
-
-		if (IsReplay)
-		{
-			ReplayLength = Replays[0].Length;
 		}
 	}
 }

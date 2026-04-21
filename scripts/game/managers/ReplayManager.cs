@@ -19,13 +19,15 @@ public partial class ReplayManager : Node
 
 	[Export] public Panel ReplayViewer { get; set; }
 	public bool ViewerVisible;
-	private static TextureButton seekerPause;
+
+	// only public variable because of GameScene
+	public static TextureButton SeekerPause;
 	private static Label seekerTime;
 	private static HSlider seekerTimeline;
 	private static bool seekerHovered;
 	public static bool LMB; // fml
 	public float ReplayLength;
-
+	public string ReplayPath;
 	public Vector2 CursorPos;
 
 	private FileAccess _file;
@@ -35,9 +37,8 @@ public partial class ReplayManager : Node
 	{
 		var settings = attempt.Settings;
 		if (!settings.RecordReplays) return;
-		string path = $"{Constants.USER_FOLDER}/replays/{attempt.ID}.phxr";
-		_file = FileAccess.Open(path, FileAccess.ModeFlags.Write);
-		attempt.ReplayPath = path;
+		ReplayPath = $"{Constants.USER_FOLDER}/replays/{attempt.ID}.phxr";
+		_file = FileAccess.Open(ReplayPath, FileAccess.ModeFlags.Write);
 
 		_file.StoreString("phxr");	// sig
 		_file.Store8(1);	// replay file version
@@ -58,21 +59,19 @@ public partial class ReplayManager : Node
 		_file.Store8(0);
 		
 		string mods = string.Join("_", Runner.Attempt.Mods.Where(mod => mod.Value).Select(mod => mod.Key));
-		// GD.Print($"mods: {mods}");
 		string mapName = attempt.Map.FilePath.GetFile().GetBaseName();
-		// GD.Print($"map name: {mapName}");
 		string player = "You";
 
-		void StoreSizedString(string data)
+		void storeSizedString(string data)
 		{
 			_file.Store32((uint)data.Length);
 			_file.StoreString(data);
 		}
 
-		StoreSizedString(mods);
-		StoreSizedString(mapName);
+		storeSizedString(mods);
+		storeSizedString(mapName);
 		_file.Store64((ulong)attempt.Map.Notes.Length);
-		StoreSizedString(player);
+		storeSizedString(player);
 
 		frameCountOffset = (uint)_file.GetPosition();
 		_file.Store64(0);	// reserve frame count
@@ -80,8 +79,6 @@ public partial class ReplayManager : Node
 
 	public void SaveReplay(Attempt attempt)
 	{
-		// var settings = attempt.Settings;
-
 		_file.Seek(statusOffset);
 		_file.Store8((byte)(attempt.Alive ? (attempt.Qualifies ? 0 : 1) : 2));
 		_file.Seek(frameCountOffset);
@@ -109,18 +106,20 @@ public partial class ReplayManager : Node
 		}
 		
 		_file.Close();
-		_file = Godot.FileAccess.Open($"{Constants.USER_FOLDER}/replays/{attempt.ID}.phxr", Godot.FileAccess.ModeFlags.ReadWrite);
+
+		// open replay to store hash
+		_file = FileAccess.Open($"{Constants.USER_FOLDER}/replays/{attempt.ID}.phxr", FileAccess.ModeFlags.ReadWrite);
 		ulong length = _file.GetLength();
 		byte[] hash = SHA256.HashData(_file.GetBuffer((long)length));
 		_file.StoreBuffer(hash);
+
 		_file.Close();
 	}
 
 	public void InitReplayLength()
 	{
 		if (Runner?.Attempt == null) return;
-
-		ReplayLength = Runner.Attempt.ReplayLength;
+		ReplayLength = Runner.Attempt.Replays[0].Length;
 	}
 
 	public override void _Ready()
@@ -128,20 +127,25 @@ public partial class ReplayManager : Node
 		base._Ready();	
 
 		// this entire code lowkey sucks, so i am just copy and pasting it because i am lazy -fog
-		seekerPause = ReplayViewer.GetNode<TextureButton>("Pause");
+		SeekerPause = ReplayViewer.GetNode<TextureButton>("Pause");
 		seekerTime = ReplayViewer.GetNode<Label>("Time");
 		seekerTimeline = ReplayViewer.GetNode<HSlider>("Seek");
 
-		seekerPause.Pressed += () =>
+		SeekerPause.Pressed += () =>
 		{
 			Runner.Playing = !Runner.Playing;
-			SoundManager.Song.PitchScale = Runner.Playing ? (float)Runner.Attempt.Speed : 0.0000000000000001f; // we really need a better way to do this
-			seekerPause.TextureNormal = GD.Load<Texture2D>(Runner.Playing ? "res://textures/ui/pause.png" : "res://textures/ui/play.png");
+			SoundManager.Song.PitchScale = (float)Runner.Attempt.Speed;
+			SoundManager.Song.StreamPaused = !Runner.Playing;
+
+			string texturePath = Runner.Playing ? "res://textures/ui/pause.png" : "res://textures/ui/play.png";
+			SeekerPause.TextureNormal = GD.Load<Texture2D>(texturePath);
 		};
 
 		seekerTimeline.ValueChanged += (double value) =>
 		{
-			seekerTime.Text = $"{Util.String.FormatTime(value * ReplayLength / 1000)} / {Util.String.FormatTime(ReplayLength / 1000)}";
+			string current = $"{Util.String.FormatTime(value * ReplayLength / 1000)}";
+			string end = $"{Util.String.FormatTime(ReplayLength / 1000)}";
+			seekerTime.Text = $"{current} / {end}";
 		};
 
 		seekerTimeline.DragEnded += (bool _) =>
@@ -165,7 +169,7 @@ public partial class ReplayManager : Node
 
 			if (!seekerHovered || !LMB)
 			{
-				seekerTimeline.Value = Runner.Attempt.Progress / Runner.Attempt.ReplayLength;
+				seekerTimeline.Value = Runner.Attempt.Progress / Runner.Attempt.Replays[0].Length;
 			}
 
 			for (int i = 0; i < Runner.Attempt.Replays.Length; i++)
