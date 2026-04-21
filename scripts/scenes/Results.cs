@@ -92,7 +92,7 @@ public partial class Results : BaseScene
 			}
 			else
 			{
-				path = GameScene.Attempt.ReplayFile.GetPath();
+				path = GameScene.Attempt.ReplayPath;
 			}
 
 			if (File.Exists(path))

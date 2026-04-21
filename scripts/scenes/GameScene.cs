@@ -59,26 +59,26 @@ public partial class GameScene : BaseScene
 		};
 		
 		Runner.Attempt = Attempt;
-		GD.Print(Runner.Attempt.ID);
 
-		GD.Print(Runner.Attempt.IsReplay);
 		if (Runner.Attempt.IsReplay)
 		{
-			GD.Print("set");
+			GD.Print("Replay Mode: playback");
 			ReplayManager.CurrentMode = ReplayManager.Mode.PLAYBACK;
 		}
 		else if (Runner.Attempt.Settings.RecordReplays)
 		{
 			ReplayManager.NewReplay(Runner.Attempt);
+			GD.Print("Replay Mode: record");
 			ReplayManager.CurrentMode = ReplayManager.Mode.RECORD;
 		}
-		// else if (!Runner.Attempt.IsReplay && !Runner.Attempt.Settings.RecordReplays)
 		else
 		{
-			GD.Print("set none");
+			GD.Print("Replay Mode: none");
 			ReplayManager.CurrentMode = ReplayManager.Mode.NONE;
 		}
+		
     	Runner.Play();
+		ReplayManager.InitReplayLength();
 	}
 
     public override void Load()
@@ -165,15 +165,18 @@ public partial class GameScene : BaseScene
 				case Key.F1:
 					if (Attempt.IsReplay)
 					{
-						//ShowReplayViewer(!ReplayViewerShown);
+						ReplayManager.ShowReplayViewer(Attempt);
 					}
 					break;
 				case Key.Space:
 					if (Attempt.IsReplay)
 					{
 						Runner.Playing = !Runner.Playing;
-						SoundManager.Song.PitchScale = Runner.Playing ? (float)Attempt.Speed : 0.00000000000001f;	// ooohh my goood
-						//replayViewerPause.TextureNormal = GD.Load<Texture2D>(Playing ? "res://textures/ui/pause.png" : "res://textures/ui/play.png");
+						SoundManager.Song.PitchScale = (float)Attempt.Speed;
+						SoundManager.Song.StreamPaused = !Runner.Playing;
+
+						string texturePath = Runner.Playing ? "res://textures/ui/pause.png" : "res://textures/ui/play.png";
+						ReplayManager.SeekerPause.TextureNormal = GD.Load<Texture2D>(texturePath);
 					}
 					else
 					{
@@ -198,7 +201,7 @@ public partial class GameScene : BaseScene
 			switch (eventMouseButton.ButtonIndex)
 			{
 				case MouseButton.Left:
-					//leftMouseButtonDown = eventMouseButton.Pressed;
+					ReplayManager.LMB = eventMouseButton.Pressed;
 					break;
 			}
 		}
@@ -266,7 +269,10 @@ public partial class GameScene : BaseScene
 	{
 		MenuShown = show;
 		Runner.Playing = !MenuShown;
-		SoundManager.Song.PitchScale = Runner.Playing ? (float)Attempt.Speed : 0.00000000000001f;	// not again
+		
+		// rest in peace 0.000000000000000001f pitch scale -fog
+		SoundManager.Song.PitchScale = (float)Attempt.Speed;
+		SoundManager.Song.StreamPaused = !Runner.Playing;
 
 		MenuCursor.Instance.UpdateVisible(MenuShown && SettingsManager.Instance.Settings.UseCursorInMenus.Value);
 

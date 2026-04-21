@@ -15,8 +15,19 @@ public partial class ReplayManager : Node
 	}
 
 	[Export] public Runner Runner { get; set; }
-	[Export] public Mode CurrentMode {get; set; }
+	[Export] public Mode CurrentMode { get; set; }
 
+	[Export] public Panel ReplayViewer { get; set; }
+	public bool ViewerVisible;
+
+	// only public variable because of GameScene
+	public static TextureButton SeekerPause;
+	private static Label seekerTime;
+	private static HSlider seekerTimeline;
+	private static bool seekerHovered;
+	public static bool LMB; // fml
+	public float ReplayLength;
+	public string ReplayPath;
 	public Vector2 CursorPos;
 
 	private FileAccess _file;
@@ -26,8 +37,9 @@ public partial class ReplayManager : Node
 	{
 		var settings = attempt.Settings;
 		if (!settings.RecordReplays) return;
-		
-		_file = FileAccess.Open($"{Constants.USER_FOLDER}/replays/{attempt.ID}.phxr", FileAccess.ModeFlags.Write);
+		ReplayPath = $"{Constants.USER_FOLDER}/replays/{attempt.ID}.phxr";
+		_file = FileAccess.Open(ReplayPath, FileAccess.ModeFlags.Write);
+
 		_file.StoreString("phxr");	// sig
 		_file.Store8(1);	// replay file version
 
@@ -47,19 +59,19 @@ public partial class ReplayManager : Node
 		_file.Store8(0);
 		
 		string mods = string.Join("_", Runner.Attempt.Mods.Where(mod => mod.Value).Select(mod => mod.Key));
-		string mapName = attempt.Map.FilePath.GetBaseName();
+		string mapName = attempt.Map.FilePath.GetFile().GetBaseName();
 		string player = "You";
 
-		void StoreSizedString(string data)
+		void storeSizedString(string data)
 		{
 			_file.Store32((uint)data.Length);
 			_file.StoreString(data);
 		}
 
-		StoreSizedString(mods);
-		StoreSizedString(mapName);
+		storeSizedString(mods);
+		storeSizedString(mapName);
 		_file.Store64((ulong)attempt.Map.Notes.Length);
-		StoreSizedString(player);
+		storeSizedString(player);
 
 		frameCountOffset = (uint)_file.GetPosition();
 		_file.Store64(0);	// reserve frame count
@@ -67,8 +79,6 @@ public partial class ReplayManager : Node
 
 	public void SaveReplay(Attempt attempt)
 	{
-		// var settings = attempt.Settings;
-
 		_file.Seek(statusOffset);
 		_file.Store8((byte)(attempt.Alive ? (attempt.Qualifies ? 0 : 1) : 2));
 		_file.Seek(frameCountOffset);
@@ -96,38 +106,72 @@ public partial class ReplayManager : Node
 		}
 		
 		_file.Close();
-		_file = Godot.FileAccess.Open($"{Constants.USER_FOLDER}/replays/{attempt.ID}.phxr", Godot.FileAccess.ModeFlags.ReadWrite);
+
+		// open replay to store hash
+		_file = FileAccess.Open($"{Constants.USER_FOLDER}/replays/{attempt.ID}.phxr", FileAccess.ModeFlags.ReadWrite);
 		ulong length = _file.GetLength();
 		byte[] hash = SHA256.HashData(_file.GetBuffer((long)length));
 		_file.StoreBuffer(hash);
+
 		_file.Close();
+	}
+
+	public void InitReplayLength()
+	{
+		if (Runner?.Attempt == null) return;
+		ReplayLength = Runner.Attempt.Replays[0].Length;
 	}
 
 	public override void _Ready()
 	{
-		base._Ready();
+		base._Ready();	
+
+		// this entire code lowkey sucks, so i am just copy and pasting it because i am lazy -fog
+		SeekerPause = ReplayViewer.GetNode<TextureButton>("Pause");
+		seekerTime = ReplayViewer.GetNode<Label>("Time");
+		seekerTimeline = ReplayViewer.GetNode<HSlider>("Seek");
+
+		SeekerPause.Pressed += () =>
+		{
+			Runner.Playing = !Runner.Playing;
+			SoundManager.Song.PitchScale = (float)Runner.Attempt.Speed;
+			SoundManager.Song.StreamPaused = !Runner.Playing;
+
+			string texturePath = Runner.Playing ? "res://textures/ui/pause.png" : "res://textures/ui/play.png";
+			SeekerPause.TextureNormal = GD.Load<Texture2D>(texturePath);
+		};
+
+		seekerTimeline.ValueChanged += (double value) =>
+		{
+			string current = $"{Util.String.FormatTime(value * ReplayLength / 1000)}";
+			string end = $"{Util.String.FormatTime(ReplayLength / 1000)}";
+			seekerTime.Text = $"{current} / {end}";
+		};
+
+		seekerTimeline.DragEnded += (bool _) =>
+		{
+			resetToSeekedPosition((float)seekerTimeline.Value);
+		};
+
+		seekerTimeline.FocusEntered += () => {
+			seekerHovered = true;
+		};
+		seekerTimeline.FocusExited += () => {
+			seekerHovered = false;
+		};
 
 	}
 
 	public override void _Process(double delta)
 	{
-
-		/*
-		fog here!
-
-		this is all barebones and copied and pasted just to observe functionality
-		i will write functions for this maybe either in ReplayManager, or in GameScene.cs
-		for now, i got simple cursor movement working so we can go off that as a base
-
-		the replay system are meant to be done for multiple replays
-		lowkey want to scrap that since it overcomplicates things + better off being an external tool
-		sorry nyu :(
-
-		anyways, had to speedrun some stupid functionality and hacks but replay cursor movement works, saving still broken
-		*/
-	
 		if (Runner.Attempt.IsReplay && Runner.Playing)
 		{
+
+			if (!seekerHovered || !LMB)
+			{
+				seekerTimeline.Value = Runner.Attempt.Progress / Runner.Attempt.Replays[0].Length;
+			}
+
 			for (int i = 0; i < Runner.Attempt.Replays.Length; i++)
 			{
 				var replay = Runner.Attempt.Replays[i];
@@ -209,5 +253,57 @@ public partial class ReplayManager : Node
 			//videoQuad.Position = Camera.Position - Camera.Basis.Z * 103.75f;
 			//videoQuad.Rotation = Camera.Rotation;
 		}
+	}
+
+	public void ShowReplayViewer(Attempt attempt)
+	{
+		ViewerVisible = !ViewerVisible;
+		bool visible = ViewerVisible && attempt.IsReplay;
+
+		ReplayViewer.Visible = visible;
+
+		Input.MouseMode = visible
+		 	? Input.MouseModeEnum.Visible
+		  	: Input.MouseModeEnum.Hidden;
+	}
+
+	private void resetToSeekedPosition(float seekedTime)
+	{
+		Attempt att = Runner.Attempt;
+
+		att.Hits = 0;
+		att.Misses = 0;
+		att.Sum = 0;
+		att.Accuracy = 100;
+		att.Score = 0;
+		att.PassedNotes = 0;
+		att.Combo = 0;
+		att.ComboMultiplier = 1;
+		att.ComboMultiplierProgress = 0;
+		att.Health = 100;
+		att.HealthStep = 15;
+
+		for (int i = 0; i < att.Map.Notes.Length; i++)
+		{
+			att.Map.Notes[i].Hittable = false;
+		}
+
+		att.Progress = seekedTime * ReplayLength;
+
+		for (int i = 0; i < att.Replays[0].Frames.Length; i++)
+		{
+			if (att.Progress < att.Replays[0].Frames[i].Progress)
+			{
+				att.Replays[0].FrameIndex = Math.Max(0, i - 1);
+				break;
+			}
+		}
+
+		if (!SoundManager.Song.Playing)
+		{
+			SoundManager.Song.Play();
+		}
+
+		SoundManager.Song.Seek((float)att.Progress / 1000);
 	}
 }

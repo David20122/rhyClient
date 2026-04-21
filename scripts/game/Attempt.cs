@@ -53,7 +53,7 @@ public partial class Attempt : GodotObject
 	public double DistanceMM = 0;
 
 	public ulong FirstNote;
-	public FileAccess ReplayFile;
+	public string ReplayPath;
 	public Replay? Replay { get; set; }
 	public Replay[] Replays;
 	public List<float[]> ReplayFrames = [];
