@@ -61,12 +61,14 @@ public struct Replay
         LastFrame = 0;
 
         byte[] bytes = FileBuffer.Get((int)FileBuffer.Length - 32);
+
+        string ReplaySHA256 = FileBuffer.Get(32).Stringify();
         // crc32 is faster, will also change later
-        if (SHA256.HashData(bytes).Stringify() != FileBuffer.Get(32).Stringify())
+        if (SHA256.HashData(bytes).Stringify() != ReplaySHA256)
         {
             Valid = false;
             ToastNotification.Notify("Replay file corrupted", 2);
-            Logger.Error($"Replay file corrupted; invalid hash");
+            Logger.Error($"Replay file corrupted; invalid SHA256 hash");
             return;
         }
 
@@ -103,6 +105,8 @@ public struct Replay
 
             List<string> rawMods = [.. FileBuffer.GetString((int)FileBuffer.GetUInt32()).Split("_")];
 
+            // GD.Print($"raw mods: {string.Join(", ", rawMods)}");
+
             Modifiers = new()
             {
                 ["NoFail"] = rawMods.Contains("NoFail"),
@@ -114,14 +118,18 @@ public struct Replay
             };
 
             MapID = FileBuffer.GetString((int)FileBuffer.GetUInt32());
+
+            // GD.Print($"replay mapid: {MapID}");
             MapNoteCount = FileBuffer.GetUInt64();
             MapFilePath = $"{Constants.USER_FOLDER}/maps/default/{MapID}.phxm";
+
+            // GD.Print(MapFilePath);
 
             if (!File.Exists(MapFilePath))
             {
                 Valid = false;
                 ToastNotification.Notify("Replay map not found", 2);
-                Logger.Log($"Replay map not found; map ID {MapID}");
+                Logger.Log($"Replay map not found; map ID {MapID}.phxm");
                 return;
             }
 
