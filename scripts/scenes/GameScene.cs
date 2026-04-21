@@ -59,26 +59,26 @@ public partial class GameScene : BaseScene
 		};
 		
 		Runner.Attempt = Attempt;
-		GD.Print(Runner.Attempt.ID);
 
-		GD.Print(Runner.Attempt.IsReplay);
 		if (Runner.Attempt.IsReplay)
 		{
-			GD.Print("set");
+			GD.Print("Replay Mode: playback");
 			ReplayManager.CurrentMode = ReplayManager.Mode.PLAYBACK;
 		}
 		else if (Runner.Attempt.Settings.RecordReplays)
 		{
 			ReplayManager.NewReplay(Runner.Attempt);
+			GD.Print("Replay Mode: record");
 			ReplayManager.CurrentMode = ReplayManager.Mode.RECORD;
 		}
 		// else if (!Runner.Attempt.IsReplay && !Runner.Attempt.Settings.RecordReplays)
 		else
 		{
-			GD.Print("set none");
+			GD.Print("Replay Mode: none");
 			ReplayManager.CurrentMode = ReplayManager.Mode.NONE;
 		}
     	Runner.Play();
+		ReplayManager.InitReplayLength();
 	}
 
     public override void Load()
@@ -165,7 +165,7 @@ public partial class GameScene : BaseScene
 				case Key.F1:
 					if (Attempt.IsReplay)
 					{
-						//ShowReplayViewer(!ReplayViewerShown);
+						ReplayManager.ShowReplayViewer(Attempt);
 					}
 					break;
 				case Key.Space:
