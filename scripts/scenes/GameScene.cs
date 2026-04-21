@@ -198,7 +198,7 @@ public partial class GameScene : BaseScene
 			switch (eventMouseButton.ButtonIndex)
 			{
 				case MouseButton.Left:
-					//leftMouseButtonDown = eventMouseButton.Pressed;
+					ReplayManager.LMB = eventMouseButton.Pressed;
 					break;
 			}
 		}

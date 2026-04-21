@@ -23,6 +23,7 @@ public partial class ReplayManager : Node
 	private static Label seekerTime;
 	private static HSlider seekerTimeline;
 	private static bool seekerHovered;
+	public static bool LMB; // fml
 	public float ReplayLength;
 
 	public Vector2 CursorPos;
@@ -134,8 +135,8 @@ public partial class ReplayManager : Node
 		seekerPause.Pressed += () =>
 		{
 			Runner.Playing = !Runner.Playing;
-			SoundManager.Song.PitchScale = Runner.Playing ? (float)Runner.Attempt.Speed : 0.0000000000000001f;
-			// seekerPause.TextureNormal = GD.Load<Texture2D>(Runner.Playing ? "res://textures/pause.png" : "res://textures/play.png");
+			SoundManager.Song.PitchScale = Runner.Playing ? (float)Runner.Attempt.Speed : 0.0000000000000001f; // we really need a better way to do this
+			seekerPause.TextureNormal = GD.Load<Texture2D>(Runner.Playing ? "res://textures/ui/pause.png" : "res://textures/ui/play.png");
 		};
 
 		seekerTimeline.ValueChanged += (double value) =>
@@ -161,6 +162,11 @@ public partial class ReplayManager : Node
 	{
 		if (Runner.Attempt.IsReplay && Runner.Playing)
 		{
+
+			if (!seekerHovered || !LMB)
+			{
+				seekerTimeline.Value = Runner.Attempt.Progress / Runner.Attempt.ReplayLength;
+			}
 
 			for (int i = 0; i < Runner.Attempt.Replays.Length; i++)
 			{
