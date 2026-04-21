@@ -251,9 +251,10 @@ ReplayManager = NodePath("ReplayManager")
 UseGameSpace = true
 AddSpaceAsChild = true
 
-[node name="ReplayManager" type="Node" parent="." unique_id=40137833 node_paths=PackedStringArray("Runner")]
+[node name="ReplayManager" type="Node" parent="." unique_id=40137833 node_paths=PackedStringArray("Runner", "ReplayViewer")]
 script = ExtResource("2_twgab")
 Runner = NodePath("../Runner")
+ReplayViewer = NodePath("../ReplayViewer")
 
 [node name="Runner" type="Node3D" parent="." unique_id=580620214 node_paths=PackedStringArray("HudManager", "Camera", "Grid", "Cursor", "Notes")]
 script = ExtResource("2_qnb83")

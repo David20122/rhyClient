@@ -361,6 +361,13 @@ public partial class Runner : Node3D
 
 		Attempt.HitsInfo = Attempt.HitsInfo[0 .. (int)Attempt.PassedNotes];
 
+		// dont want an infinite dependency loop so im just going to do this -fog
+		if (!Attempt.IsReplay && GameScene.Instance.ReplayManager.CurrentMode == ReplayManager.Mode.RECORD)
+		{
+			GameScene.Instance.ReplayManager.SaveReplay(Attempt);
+		}
+
+
 		if (!Attempt.IsReplay)
 		{
 			Stats.GamePlaytime += (Time.GetTicksUsec() - Attempt.TimeStarted) / 1000000;
