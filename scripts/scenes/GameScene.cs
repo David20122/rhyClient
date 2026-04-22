@@ -59,6 +59,7 @@ public partial class GameScene : BaseScene
 		};
 		
 		Runner.Attempt = Attempt;
+		ReplayManager.InitReplayLength();
 
 		if (Runner.Attempt.IsReplay)
 		{
@@ -78,7 +79,6 @@ public partial class GameScene : BaseScene
 		}
 		
     	Runner.Play();
-		ReplayManager.InitReplayLength();
 	}
 
     public override void Load()

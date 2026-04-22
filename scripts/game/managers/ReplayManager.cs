@@ -118,7 +118,7 @@ public partial class ReplayManager : Node
 
 	public void InitReplayLength()
 	{
-		if (Runner?.Attempt == null) return;
+		if (Runner?.Attempt == null || !Runner.Attempt.IsReplay) return;
 		ReplayLength = Runner.Attempt.Replays[0].Length;
 	}
 
