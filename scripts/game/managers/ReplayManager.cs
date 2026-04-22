@@ -94,6 +94,7 @@ public partial class ReplayManager : Node
 		_file.Seek(_file.GetLength());
 		_file.Store64(attempt.FirstNote);
 		_file.Store64(attempt.Sum);
+		GD.Print(string.Join(", ", attempt.HitsInfo));
 		for (ulong i = attempt.FirstNote; i < attempt.FirstNote + attempt.Sum; i++)
 		{
 			_file.Store8((byte)(attempt.HitsInfo[i] == -1 ? 255 : Math.Min(254, attempt.HitsInfo[i] * (254 / 55))));
@@ -114,6 +115,8 @@ public partial class ReplayManager : Node
 		_file.StoreBuffer(hash);
 
 		_file.Close();
+
+		attempt.ReplayPath = ReplayPath;
 	}
 
 	public void InitReplayLength()
