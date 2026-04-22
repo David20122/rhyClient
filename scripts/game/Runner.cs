@@ -81,6 +81,7 @@ public partial class Runner : Node3D
 
 		Cursor.RotationDegrees += Vector3.Back * settings.CursorRotation * (float)delta;
 
+		// i hate this shit
         if (settings.CursorTrail)
         {
             List<Dictionary<string, object>> culledList = [];
