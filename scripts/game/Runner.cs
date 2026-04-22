@@ -37,8 +37,11 @@ public partial class Runner : Node3D
 	[Export] public Camera3D Camera;
 	[Export] public MeshInstance3D Grid;
 	[Export] public MeshInstance3D Cursor;
+	[Export] public MultiMeshInstance3D CursorTrail;
 	[Export] public MultiMeshInstance3D Notes;
 	[Export] public VideoStreamPlayer VideoStreamPlayer;
+
+	private List<Dictionary<string, object>> lastCursorPositions = []; //temp, making class for ts
 
 	public override void _Ready()
 	{
@@ -77,6 +80,57 @@ public partial class Runner : Node3D
 		}
 
 		Cursor.RotationDegrees += Vector3.Back * settings.CursorRotation * (float)delta;
+
+        if (settings.CursorTrail)
+        {
+            List<Dictionary<string, object>> culledList = [];
+
+            lastCursorPositions.Add(new()
+            {
+                ["Time"] = now,
+                ["Position"] = Attempt.CursorPosition,
+                ["Rotation"] = Cursor.Rotation.Z
+            });
+
+            foreach (Dictionary<string, object> entry in lastCursorPositions)
+            {
+                if (now - (ulong)entry["Time"] >= (settings.TrailTime * 1000000))
+                {
+                    continue;
+                }
+
+                if (Attempt.CursorPosition.DistanceTo((Vector2)entry["Position"]) == 0)
+                {
+                    continue;
+                }
+
+                culledList.Add(entry);
+            }
+
+            int count = culledList.Count;
+            float size = ((Vector2)Cursor.Mesh.Get("size")).X;
+            Transform3D transform = new Transform3D(new Vector3(size, 0, 0), new Vector3(0, size, 0), new Vector3(0, 0, size), Vector3.Zero);
+            int j = 0;
+
+            CursorTrail.Multimesh.InstanceCount = count;
+
+            foreach (Dictionary<string, object> entry in culledList)
+            {
+                ulong difference = now - (ulong)entry["Time"];
+                uint alpha = (uint)(difference / (settings.TrailTime * 1000000) * 255);
+
+                transform.Origin = new Vector3(((Vector2)entry["Position"]).X, ((Vector2)entry["Position"]).Y, 0);
+                transform = transform.RotatedLocal(Vector3.Back, (float)entry["Rotation"]);
+
+                CursorTrail.Multimesh.SetInstanceTransform(j, transform);
+                CursorTrail.Multimesh.SetInstanceColor(j, Color.FromHtml($"ffffff{255 - alpha:X2}"));
+                j++;
+            }
+        }
+        else
+        {
+            CursorTrail.Multimesh.InstanceCount = 0;
+        }
 
 		if (Attempt.Map.AudioBuffer != null)
 		{

@@ -256,13 +256,15 @@ script = ExtResource("2_twgab")
 Runner = NodePath("../Runner")
 ReplayViewer = NodePath("../ReplayViewer")
 
-[node name="Runner" type="Node3D" parent="." unique_id=580620214 node_paths=PackedStringArray("HudManager", "Camera", "Grid", "Cursor", "Notes")]
+[node name="Runner" type="Node3D" parent="." unique_id=580620214 node_paths=PackedStringArray("HudManager", "Camera", "Grid", "Cursor", "CursorTrail", "Notes", "VideoStreamPlayer")]
 script = ExtResource("2_qnb83")
 HudManager = NodePath("HUD")
 Camera = NodePath("Camera3D")
 Grid = NodePath("HUD/Grid")
 Cursor = NodePath("HUD/Grid/Cursor")
+CursorTrail = NodePath("HUD/Grid/CursorTrail")
 Notes = NodePath("Notes")
+VideoStreamPlayer = NodePath("Video/VideoViewport/VideoStreamPlayer")
 
 [node name="HUD" type="Node3D" parent="Runner" unique_id=1234434255 node_paths=PackedStringArray("Runner")]
 script = ExtResource("3_sww3w")

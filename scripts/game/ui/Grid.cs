@@ -5,6 +5,7 @@ public partial class Grid : MeshInstance3D, IUIComponent
 {
     [Export] public Runner Runner {get; set;}
     public MeshInstance3D Cursor { get; set; }
+    public MultiMeshInstance3D CursorTrail { get; set; }
 
     private static readonly PackedScene hit_feedback = GD.Load<PackedScene>("res://prefabs/hit_popup.tscn");
 	private static readonly PackedScene miss_feedback = GD.Load<PackedScene>("res://prefabs/miss_icon.tscn");
@@ -22,7 +23,9 @@ public partial class Grid : MeshInstance3D, IUIComponent
         Cursor ??= GetNode<MeshInstance3D>("Cursor");
         (Cursor.Mesh as QuadMesh).Size = new Vector2((float)(Constants.CURSOR_SIZE * Runner.Attempt.Settings.CursorScale.Value), (float)(Constants.CURSOR_SIZE * Runner.Attempt.Settings.CursorScale.Value));
 		(Cursor.GetActiveMaterial(0) as StandardMaterial3D).AlbedoTexture = SkinManager.Instance.Skin.CursorImage;
-        (GetActiveMaterial(0) as StandardMaterial3D).AlbedoTexture = SkinManager.Instance.Skin.GridImage;
+
+        CursorTrail ??= GetNode<MultiMeshInstance3D>("CursorTrail");
+        (CursorTrail.MaterialOverride as StandardMaterial3D).AlbedoTexture = SkinManager.Instance.Skin.CursorImage;
 
         Runner.HitResultChanged += onHitResultChanged;
     }
