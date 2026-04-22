@@ -32,6 +32,13 @@ public partial class PanelLeft : UIComponent
 		multiplierProgressMaterial.SetShaderParameter("sides", Math.Clamp(Runner.Attempt.ComboMultiplierIncrement, 3, 32));
 
 		Runner.AttemptStatsUpdated += OnStatsUpdated;
+
+		if (Runner.Attempt.Settings.SimpleHUD)
+		{
+			Godot.Collections.Array<Node> widgets = viewport.GetChildren();
+            foreach (Node widget in widgets)
+                (widget as CanvasItem).Visible = false;
+		}
 	}
 
     public override void _PhysicsProcess(double delta)

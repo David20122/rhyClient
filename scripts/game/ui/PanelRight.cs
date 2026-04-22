@@ -35,6 +35,14 @@ public partial class PanelRight : UIComponent
 
 		Runner.AttemptStatsUpdated += OnStatsUpdated;
 		Runner.HitResultChanged += OnHitStateChanged;
+
+		if (Runner.Attempt.Settings.SimpleHUD)
+		{
+			Godot.Collections.Array<Node> widgets = viewport.GetChildren();
+            foreach (Node widget in widgets)
+                (widget as CanvasItem).Visible = false;
+            SimpleMisses.Visible = true;
+		}
 	}
 
     public override void _PhysicsProcess(double delta)

@@ -3,8 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-// hi :)
-
 public partial class GameScene : BaseScene
 {
 	[Export] public Runner Runner;
