@@ -1,32 +1,112 @@
 using Godot;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 public partial class GameScene : BaseScene
 {
 	[Export] public Runner Runner;
 	[Export] public Panel Menu;
 	[Export] public ReplayManager ReplayManager;
+	public PlayerInputController PlayerInputController { get; private set; }
 	public static Attempt Attempt;
 
 	public bool MenuShown = false;
 
 	public static GameScene Instance;
 
-    public override void _EnterTree()
-    {
-        Instance = this;
-    }
+	public override void _EnterTree()
+	{
+		Instance = this;
+	}
 
 	public override void _ExitTree()
-    {
-        Instance.QueueFree();
-    }
+	{
+		Instance.QueueFree();
+	}
 
 	public override void _Ready()
 	{
 		base._Ready();
+
+		PlayerInputController = GetNode<PlayerInputController>("PlayerInputController");
+		if (PlayerInputController == null)
+			GD.PrintErr("No PlayerInputController found!");
+
+		PlayerInputController.OnMouseMove += (relative, absolute) =>
+		{
+			if (!Runner.Playing || Attempt.IsReplay) return;
+
+			if (!Attempt.Settings.AbsoluteInput)
+			{
+				UpdateCursor(relative);
+			}
+			else
+			{
+				// Take mouse position difference between center of the current window size
+				// This is to make the mouse position the same as relative if it was locked, or confined
+				Vector2 AbsolutePosition = absolute - (GetViewport().GetWindow().Size / 2);
+
+				// Multiply by 0.582f to make it 1:1 to absolute scale on nightly
+				UpdateCursor(AbsolutePosition * 0.582f);
+			}
+
+			Attempt.DistanceMM += relative.Length() / Attempt.Settings.Sensitivity / 57.5;
+		};
+
+		PlayerInputController.OnLeftMouseButton += isPressed =>
+		{
+			if (!isPressed) return;
+
+			ReplayManager.LMB = isPressed;
+		};
+
+		PlayerInputController.OnTogglePaused += () =>
+		{
+			Attempt.Qualifies = false;
+
+			if (SettingsManager.Shown)
+			{
+				SettingsManager.HideMenu();
+			}
+			else
+			{
+				ShowMenu(!MenuShown);
+			}
+		};
+
+		PlayerInputController.OnToggleReplayViewerVisibility += () =>
+		{
+			if (Attempt.IsReplay)
+			{
+				ReplayManager.ShowReplayViewer(Attempt);
+			}
+		};
+
+		PlayerInputController.OnPauseOrSkip += () =>
+		{
+			if (Attempt.IsReplay)
+			{
+				Runner.Playing = !Runner.Playing;
+				SoundManager.Song.PitchScale = (float)Attempt.Speed;
+				SoundManager.Song.StreamPaused = !Runner.Playing;
+
+				string texturePath =
+					Runner.Playing ? "res://textures/ui/pause.png" : "res://textures/ui/play.png";
+				ReplayManager.SeekerPause.TextureNormal = GD.Load<Texture2D>(texturePath);
+			}
+			else
+			{
+				if (Lobby.Players.Count > 1) return;
+
+				Runner.Skip();
+			}
+		};
+
+		PlayerInputController.OnToggleFade += () =>
+		Attempt.Settings.FadeOut.Value = !Attempt.Settings.FadeOut;
+		PlayerInputController.OnTogglePushback += () =>
+		Attempt.Settings.Pushback.Value = !Attempt.Settings.Pushback;
+		PlayerInputController.OnRestartPressed += Restart;
 
 		Control focused = SceneManager.Root.GetViewport().GuiGetFocusOwner();
 		focused?.ReleaseFocus();
@@ -57,7 +137,7 @@ public partial class GameScene : BaseScene
 
 			Runner.Stop();
 		};
-		
+
 		Runner.Attempt = Attempt;
 		ReplayManager.InitReplayLength();
 
@@ -77,20 +157,20 @@ public partial class GameScene : BaseScene
 			GD.Print("Replay Mode: none");
 			ReplayManager.CurrentMode = ReplayManager.Mode.NONE;
 		}
-		
-    	Runner.Play();
+
+		Runner.Play();
 	}
 
-    public override void Load()
-    {
-        base.Load();
+	public override void Load()
+	{
+		base.Load();
 
 		DisplayServer.WindowSetVsyncMode(DisplayServer.VSyncMode.Disabled);
 
 		MenuCursor.Instance.UpdateVisible(false, false);
-        SceneManager.Space.UpdateState(true);
+		SceneManager.Space.UpdateState(true);
 		SceneManager.Space.UpdateMap(Attempt.Map);
-    }
+	}
 
 	public static void Play(Map map, double speed, double startFrom, Dictionary<string, bool> mods, string[] players = null, Replay[] replays = null)
 	{
@@ -98,7 +178,7 @@ public partial class GameScene : BaseScene
 		Attempt = new Attempt(map, speed, startFrom, mods ?? [], players, replays);
 		SceneManager.Load("res://scenes/game.tscn");
 	}
-	
+
 	public void Restart()
 	{
 		Attempt.Alive = false;
@@ -116,101 +196,13 @@ public partial class GameScene : BaseScene
 	{
 		if (ReplayManager.CurrentMode == ReplayManager.Mode.PLAYBACK)
 		{
-			ReplayManager.UpdateReplayCursor(Attempt);
-		}
+			ReplayManager.UpdateReplayCursor(Attempt); }
 	}
 
-	public override void _Input(InputEvent @event)
-	{
-		if (@event is InputEventMouseMotion eventMouseMotion)
-		{
-			if (!Runner.Playing || Attempt.IsReplay) return;
-
-			if (!Attempt.Settings.AbsoluteInput)
-			{
-				UpdateCursor(eventMouseMotion.Relative);
-			}
-			else
-			{
-				// Take mouse position difference between center of the current window size
-				// This is to make the mouse position the same as relative if it was locked, or confined
-				Vector2 AbsolutePosition = eventMouseMotion.Position - (GetViewport().GetWindow().Size / 2);
-
-				// Multiply by 0.582f to make it 1:1 to absolute scale on nightly
-				UpdateCursor(AbsolutePosition * 0.582f);
-			}
-
-			Attempt.DistanceMM += eventMouseMotion.Relative.Length() / Attempt.Settings.Sensitivity / 57.5;
-		}
-		else if (@event is InputEventKey eventKey && eventKey.Pressed)
-		{
-			switch (eventKey.PhysicalKeycode)
-			{
-				case Key.Escape:
-					Attempt.Qualifies = false;
-
-					if (SettingsManager.Shown)
-					{
-						SettingsManager.HideMenu();
-					}
-					else
-					{
-						ShowMenu(!MenuShown);
-					}
-
-					break;
-				case Key.Quoteleft:
-					Restart();
-					break;
-				case Key.F1:
-					if (Attempt.IsReplay)
-					{
-						ReplayManager.ShowReplayViewer(Attempt);
-					}
-					break;
-				case Key.Space:
-					if (Attempt.IsReplay)
-					{
-						Runner.Playing = !Runner.Playing;
-						SoundManager.Song.PitchScale = (float)Attempt.Speed;
-						SoundManager.Song.StreamPaused = !Runner.Playing;
-
-						string texturePath = Runner.Playing ? "res://textures/ui/pause.png" : "res://textures/ui/play.png";
-						ReplayManager.SeekerPause.TextureNormal = GD.Load<Texture2D>(texturePath);
-					}
-					else
-					{
-						if (Lobby.Players.Count > 1)
-						{
-							break;
-						}
-
-						Runner.Skip();
-					}
-					break;
-				case Key.F:
-					Attempt.Settings.FadeOut.Value = !Attempt.Settings.FadeOut;
-					break;
-				case Key.P:
-					Attempt.Settings.Pushback.Value = !Attempt.Settings.Pushback;
-					break;
-			}
-		}
-		else if (@event is InputEventMouseButton eventMouseButton)
-		{
-			switch (eventMouseButton.ButtonIndex)
-			{
-				case MouseButton.Left:
-					ReplayManager.LMB = eventMouseButton.Pressed;
-					break;
-			}
-		}
-	}
-
-    public void UpdateCursor(Vector2 mouseDelta)
+	public void UpdateCursor(Vector2 mouseDelta)
 	{
 		float sensitivity = (float)(Attempt.IsReplay ? Attempt.Replays[0].Sensitivity : Attempt.Settings.Sensitivity);
-		sensitivity *= (float)Attempt.Settings.FoV.Value / 70f;
+		sensitivity *= Attempt.Settings.FoV.Value / 70f;
 
 		if (Attempt.Settings.AbsoluteInput)
 		{
@@ -242,11 +234,11 @@ public partial class GameScene : BaseScene
 		{
 			Runner.Camera.Rotation += new Vector3(-mouseDelta.Y / 120 * sensitivity / (float)Math.PI, -mouseDelta.X / 120 * sensitivity / (float)Math.PI, 0);
 
-			Runner.Camera.Rotation = new Vector3((float)Math.Clamp(Runner.Camera.Rotation.X, Mathf.DegToRad(-90), Mathf.DegToRad(90)), Runner.Camera.Rotation.Y, Runner.Camera.Rotation.Z);
+			Runner.Camera.Rotation = new Vector3(Math.Clamp(Runner.Camera.Rotation.X, Mathf.DegToRad(-90), Mathf.DegToRad(90)), Runner.Camera.Rotation.Y, Runner.Camera.Rotation.Z);
 
 			Vector3 Origin = new Vector3(0,0,3.5f);
 			Vector3 CursorLock = new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0);
-			// The pivot is to mimic ROBLOX's orbital camera
+			// The pivot is to mimic ROBLOX' orbital camera
 			Vector3 Pivot = Runner.Camera.Basis.Z / 4f;
 
 			Runner.Camera.Position = Origin + CursorLock * Attempt.Settings.CameraParallax + Pivot;
@@ -262,14 +254,15 @@ public partial class GameScene : BaseScene
 
 			//videoQuad.Position = Camera.Position - Camera.Basis.Z * 103.75f;
 			//videoQuad.Rotation = Camera.Rotation;
+
 		}
-    }
+	}
 
 	public void ShowMenu(bool show = true)
 	{
 		MenuShown = show;
 		Runner.Playing = !MenuShown;
-		
+
 		// rest in peace 0.000000000000000001f pitch scale -fog
 		SoundManager.Song.PitchScale = (float)Attempt.Speed;
 		SoundManager.Song.StreamPaused = !Runner.Playing;

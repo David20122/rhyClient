@@ -36,6 +36,7 @@
 [ext_resource type="Script" uid="uid://dhrqgv44b65ls" path="res://scripts/game/ui/Skip.cs" id="25_nepv3"]
 [ext_resource type="Script" uid="uid://ddtnij8m4eipl" path="res://scripts/game/ui/Grid.cs" id="27_js0lu"]
 [ext_resource type="Script" uid="uid://b7jvxorkr4xfi" path="res://scripts/game/ui/Speed.cs" id="28_gxtfn"]
+[ext_resource type="Script" uid="uid://c8d872aoiqglo" path="res://scripts/PlayerInputController.cs" id="37_02fa5"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_a6jk1"]
 resource_name = "Material"
@@ -250,6 +251,9 @@ Menu = NodePath("Menu")
 ReplayManager = NodePath("ReplayManager")
 UseGameSpace = true
 AddSpaceAsChild = true
+
+[node name="PlayerInputController" type="Node" parent="." unique_id=340777835]
+script = ExtResource("37_02fa5")
 
 [node name="ReplayManager" type="Node" parent="." unique_id=40137833 node_paths=PackedStringArray("Runner", "ReplayViewer")]
 script = ExtResource("2_twgab")
