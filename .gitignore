@@ -4,6 +4,9 @@
 .vs/
 Properties/
 
+# Rider
+.idea/
+
 # Git
 .git/
 .gitattributes
