@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dly10tvxguvhb" path="res://scripts/scenes/GameScene.cs" id="1_bhx41"]
 [ext_resource type="ArrayMesh" uid="uid://ceww5w8t33lqy" path="res://user/meshes/squircle.obj" id="2_e1j6l"]
+[ext_resource type="Script" uid="uid://dgpxhu2ya41qe" path="res://scripts/CursorManager.cs" id="2_nepv3"]
 [ext_resource type="Texture2D" uid="uid://b3g4aw54n6bow" path="res://user/skins/default/game/grid.png" id="2_q78ea"]
 [ext_resource type="Script" uid="uid://dp8nga2aot1n2" path="res://scripts/game/Runner.cs" id="2_qnb83"]
 [ext_resource type="Script" uid="uid://bxwlotp5vcjux" path="res://scripts/game/managers/ReplayManager.cs" id="2_twgab"]
@@ -251,6 +252,13 @@ Menu = NodePath("Menu")
 ReplayManager = NodePath("ReplayManager")
 UseGameSpace = true
 AddSpaceAsChild = true
+
+[node name="CursorManager" type="Node" parent="." unique_id=1202704325 node_paths=PackedStringArray("playerInputController", "runner", "cursor", "camera")]
+script = ExtResource("2_nepv3")
+playerInputController = NodePath("../PlayerInputController")
+runner = NodePath("../Runner")
+cursor = NodePath("../Runner/HUD/Grid/Cursor")
+camera = NodePath("../Runner/Camera3D")
 
 [node name="PlayerInputController" type="Node" parent="." unique_id=340777835]
 script = ExtResource("37_02fa5")

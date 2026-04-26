@@ -8,6 +8,7 @@ public partial class GameScene : BaseScene
 	[Export] public Panel Menu;
 	[Export] public ReplayManager ReplayManager;
 	public PlayerInputController PlayerInputController { get; private set; }
+    public CursorManager CursorManager { get; private set; }
 	public static Attempt Attempt;
 
 	public bool MenuShown = false;
@@ -27,31 +28,13 @@ public partial class GameScene : BaseScene
 	public override void _Ready()
 	{
 		base._Ready();
+        CursorManager ??= GetNode<CursorManager>("CursorManager");
+        if (CursorManager == null)
+            GD.PrintErr("No CursorManager found!");
 
-		PlayerInputController = GetNode<PlayerInputController>("PlayerInputController");
-		if (PlayerInputController == null)
-			GD.PrintErr("No PlayerInputController found!");
-
-		PlayerInputController.OnMouseMove += (relative, absolute) =>
-		{
-			if (!Runner.Playing || Attempt.IsReplay) return;
-
-			if (!Attempt.Settings.AbsoluteInput)
-			{
-				UpdateCursor(relative);
-			}
-			else
-			{
-				// Take mouse position difference between center of the current window size
-				// This is to make the mouse position the same as relative if it was locked, or confined
-				Vector2 AbsolutePosition = absolute - (GetViewport().GetWindow().Size / 2);
-
-				// Multiply by 0.582f to make it 1:1 to absolute scale on nightly
-				UpdateCursor(AbsolutePosition * 0.582f);
-			}
-
-			Attempt.DistanceMM += relative.Length() / Attempt.Settings.Sensitivity / 57.5;
-		};
+		PlayerInputController ??= GetNode<PlayerInputController>("PlayerInputController");
+        if (PlayerInputController == null)
+            GD.PrintErr("No PlayerInputController found!");
 
 		PlayerInputController.OnLeftMouseButton += isPressed =>
 		{
@@ -176,6 +159,10 @@ public partial class GameScene : BaseScene
 	{
 		map = MapParser.Decode(map.FilePath);
 		Attempt = new Attempt(map, speed, startFrom, mods ?? [], players, replays);
+
+        // temp fix as rewriting the cursor stuff requires attempt context (remove later) -thom
+        CursorManager.Attempt = Attempt;
+
 		SceneManager.Load("res://scenes/game.tscn");
 	}
 
@@ -185,9 +172,12 @@ public partial class GameScene : BaseScene
 		Attempt.Qualifies = false;
 		Runner.Stop(false);
 
-		var oldAttempt = Attempt;
-		var map = MapParser.Decode(oldAttempt.Map.FilePath);
+		Attempt oldAttempt = Attempt;
+		Map map = MapParser.Decode(oldAttempt.Map.FilePath);
 		Attempt = new Attempt(map, oldAttempt.Speed, oldAttempt.StartFrom, oldAttempt.Mods, oldAttempt.Players, oldAttempt.Replays);
+
+        // temp fix as rewriting the cursor stuff requires attempt context (remove later) -thom
+        CursorManager.Attempt = Attempt;
 
 		SceneManager.ReloadCurrentScene();
 	}
@@ -197,65 +187,6 @@ public partial class GameScene : BaseScene
 		if (ReplayManager.CurrentMode == ReplayManager.Mode.PLAYBACK)
 		{
 			ReplayManager.UpdateReplayCursor(Attempt); }
-	}
-
-	public void UpdateCursor(Vector2 mouseDelta)
-	{
-		float sensitivity = (float)(Attempt.IsReplay ? Attempt.Replays[0].Sensitivity : Attempt.Settings.Sensitivity);
-		sensitivity *= Attempt.Settings.FoV.Value / 70f;
-
-		if (Attempt.Settings.AbsoluteInput)
-		{
-			// Reset everything to zero so it doesn't spin endlessly, or have infinite sensitivity
-			Runner.Camera.Rotation = Vector3.Zero;
-			Attempt.RawCursorPosition = Vector2.Zero;
-			Attempt.CursorPosition = Vector2.Zero;
-		}
-
-		if (!Runner.SpinCamera)
-		{
-			if (Attempt.Settings.CursorDrift)
-			{
-				Attempt.CursorPosition = (Attempt.CursorPosition + new Vector2(1, -1) * mouseDelta / 120 * sensitivity).Clamp(-Constants.BOUNDS, Constants.BOUNDS);
-			}
-			else
-			{
-				Attempt.RawCursorPosition += new Vector2(1, -1) * (mouseDelta * sensitivity / 120f);
-				Attempt.CursorPosition = Attempt.RawCursorPosition.Clamp(-Constants.BOUNDS, Constants.BOUNDS);
-			}
-
-			Runner.Cursor.Position = new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0);
-			Runner.Camera.Position = new Vector3(0, 0, 3.75f) + new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0) * (float)Attempt.Settings.CameraParallax;
-			Runner.Camera.Rotation = Vector3.Zero;
-
-			//videoQuad.Position = new Vector3(Camera.Position.X, Camera.Position.Y, -100);
-		}
-		else
-		{
-			Runner.Camera.Rotation += new Vector3(-mouseDelta.Y / 120 * sensitivity / (float)Math.PI, -mouseDelta.X / 120 * sensitivity / (float)Math.PI, 0);
-
-			Runner.Camera.Rotation = new Vector3(Math.Clamp(Runner.Camera.Rotation.X, Mathf.DegToRad(-90), Mathf.DegToRad(90)), Runner.Camera.Rotation.Y, Runner.Camera.Rotation.Z);
-
-			Vector3 Origin = new Vector3(0,0,3.5f);
-			Vector3 CursorLock = new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0);
-			// The pivot is to mimic ROBLOX' orbital camera
-			Vector3 Pivot = Runner.Camera.Basis.Z / 4f;
-
-			Runner.Camera.Position = Origin + CursorLock * Attempt.Settings.CameraParallax + Pivot;
-
-			Vector3 LookVector = Runner.Camera.Basis.Z;
-			Vector2 CameraVec2 = new Vector2(Runner.Camera.Position.X, Runner.Camera.Position.Y);
-			Vector2 LookVec2 = new Vector2(LookVector.X, LookVector.Y);
-
-			Attempt.RawCursorPosition = CameraVec2 - LookVec2 * Mathf.Abs(Runner.Camera.Position.Z / LookVector.Z);
-
-			Attempt.CursorPosition = Attempt.RawCursorPosition.Clamp(-Constants.BOUNDS, Constants.BOUNDS);
-			Runner.Cursor.Position = new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0);
-
-			//videoQuad.Position = Camera.Position - Camera.Basis.Z * 103.75f;
-			//videoQuad.Rotation = Camera.Rotation;
-
-		}
 	}
 
 	public void ShowMenu(bool show = true)
