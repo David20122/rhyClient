@@ -1,7 +1,7 @@
 ﻿using System;
 using Godot;
 
-public partial class CursorManager : Node
+public partial class LiveCursorManager : Node
 {
     [Export] private PlayerInputController playerInputController;
     [Export] private Runner runner;
@@ -48,7 +48,10 @@ public partial class CursorManager : Node
         CallDeferred(nameof(assignSettings));
     }
 
-    public override void _Process(double delta) => updateCursorRotation(delta);
+    public override void _Process(double delta)
+    {
+        updateCursorRotation(delta);
+    }
 
     private void updateCursor(Vector2 mouseDelta)
 	{
