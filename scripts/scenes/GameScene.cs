@@ -28,13 +28,34 @@ public partial class GameScene : BaseScene
 	public override void _Ready()
 	{
 		base._Ready();
-        CursorManager ??= GetNode<CursorManager>("CursorManager");
-        if (CursorManager == null)
-            GD.PrintErr("No LiveCursorManager found!");
 
-		PlayerInputController ??= GetNode<PlayerInputController>("PlayerInputController");
+        CursorManager ??= GetNode<CursorManager>("CursorManager");
+        PlayerInputController ??= GetNode<PlayerInputController>("PlayerInputController");
+
+        if (CursorManager == null)
+            GD.PrintErr("No CursorManager found!");
         if (PlayerInputController == null)
             GD.PrintErr("No PlayerInputController found!");
+
+        PlayerInputController.OnMouseMove += (relative, absolute) =>
+        {
+            if (!Runner.Playing || Attempt.IsReplay) return;
+
+            if (!Attempt.Settings.AbsoluteInput)
+            {
+                CursorManager.UpdateCursor(relative);
+            }
+            else
+            {
+                // Take mouse position difference between center of the current window size
+                // This is to make the mouse position the same as relative if it was locked, or confined
+                Vector2 AbsolutePosition = absolute - (GetViewport().GetWindow().Size / 2);
+
+                // Multiply by 0.582f to make it 1:1 to absolute scale on nightly
+                CursorManager.UpdateCursor(AbsolutePosition * 0.582f);
+            }
+            Attempt.DistanceMM += relative.Length() / Attempt.Settings.Sensitivity / 57.5;
+        };
 
 		PlayerInputController.OnLeftMouseButton += isPressed =>
 		{
@@ -73,8 +94,10 @@ public partial class GameScene : BaseScene
 				SoundManager.Song.PitchScale = (float)Attempt.Speed;
 				SoundManager.Song.StreamPaused = !Runner.Playing;
 
-				string texturePath =
-					Runner.Playing ? "res://textures/ui/pause.png" : "res://textures/ui/play.png";
+				string texturePath = Runner.Playing
+                    ? "res://textures/ui/pause.png"
+                    : "res://textures/ui/play.png";
+
 				ReplayManager.SeekerPause.TextureNormal = GD.Load<Texture2D>(texturePath);
 			}
 			else
@@ -85,10 +108,8 @@ public partial class GameScene : BaseScene
 			}
 		};
 
-		PlayerInputController.OnToggleFade += () =>
-		Attempt.Settings.FadeOut.Value = !Attempt.Settings.FadeOut;
-		PlayerInputController.OnTogglePushback += () =>
-		Attempt.Settings.Pushback.Value = !Attempt.Settings.Pushback;
+		PlayerInputController.OnToggleFade += () => Attempt.Settings.FadeOut.Value = !Attempt.Settings.FadeOut;
+		PlayerInputController.OnTogglePushback += () => Attempt.Settings.Pushback.Value = !Attempt.Settings.Pushback;
 		PlayerInputController.OnRestartPressed += Restart;
 
 		Control focused = SceneManager.Root.GetViewport().GuiGetFocusOwner();
