@@ -8,7 +8,7 @@ public partial class GameScene : BaseScene
 	[Export] public Panel Menu;
 	[Export] public ReplayManager ReplayManager;
 	public PlayerInputController PlayerInputController { get; private set; }
-    public LiveCursorManager LiveCursorManager { get; private set; }
+    public CursorManager CursorManager { get; private set; }
 	public static Attempt Attempt;
 
 	public bool MenuShown = false;
@@ -28,8 +28,8 @@ public partial class GameScene : BaseScene
 	public override void _Ready()
 	{
 		base._Ready();
-        LiveCursorManager ??= GetNode<LiveCursorManager>("LiveCursorManager");
-        if (LiveCursorManager == null)
+        CursorManager ??= GetNode<CursorManager>("CursorManager");
+        if (CursorManager == null)
             GD.PrintErr("No LiveCursorManager found!");
 
 		PlayerInputController ??= GetNode<PlayerInputController>("PlayerInputController");
@@ -161,7 +161,7 @@ public partial class GameScene : BaseScene
 		Attempt = new Attempt(map, speed, startFrom, mods ?? [], players, replays);
 
         // temp fix as rewriting the cursor stuff requires attempt context (remove later) -thom
-        LiveCursorManager.Attempt = Attempt;
+        CursorManager.Attempt = Attempt;
 
 		SceneManager.Load("res://scenes/game.tscn");
 	}
@@ -177,13 +177,9 @@ public partial class GameScene : BaseScene
 		Attempt = new Attempt(map, oldAttempt.Speed, oldAttempt.StartFrom, oldAttempt.Mods, oldAttempt.Players, oldAttempt.Replays);
 
         // temp fix as rewriting the cursor stuff requires attempt context (remove later) -thom
-        LiveCursorManager.Attempt = Attempt;
+        CursorManager.Attempt = Attempt;
 
 		SceneManager.ReloadCurrentScene();
-	}
-
-	public override void _Process(double delta)
-	{
 	}
 
 	public void ShowMenu(bool show = true)

@@ -1,7 +1,5 @@
 using Godot;
 using System;
-using System.ComponentModel;
-using System.Formats.Tar;
 using System.Linq;
 using System.Security.Cryptography;
 
@@ -17,9 +15,8 @@ public partial class ReplayManager : Node
 	[Export] public Runner Runner { get; set; }
 	[Export] public Mode CurrentMode { get; set; }
 	[Export] public Panel ReplayViewer { get; set; }
-    [Export] public ReplayCursorManager ReplayCursorManager { get; private set; }
+    [Export] public CursorManager CursorManager { get; private set; }
 
-    public event Action OnReplayNewFrame;
 	public bool ViewerVisible;
 
 	// only public variable because of GameScene
@@ -30,7 +27,7 @@ public partial class ReplayManager : Node
 	public static bool LMB; // fml
 	public float ReplayLength;
 	public string ReplayPath;
-	public Vector2 CursorPos;
+	public Vector2 CursorPosition { get; private set; }
 
 	private FileAccess _file;
 	private ulong statusOffset, frameCountOffset;
@@ -135,6 +132,7 @@ public partial class ReplayManager : Node
 		SeekerPause = ReplayViewer.GetNode<TextureButton>("Pause");
 		seekerTime = ReplayViewer.GetNode<Label>("Time");
 		seekerTimeline = ReplayViewer.GetNode<HSlider>("Seek");
+        CursorManager ??= GetNode<CursorManager>("CursorManager");
 
 		SeekerPause.Pressed += () =>
 		{
@@ -168,160 +166,96 @@ public partial class ReplayManager : Node
 	}
 
 	public override void _Process(double delta)
-	{
-		if (Runner.Attempt.IsReplay && Runner.Playing)
-		{
-            ReplayCursorManager.Attempt ??= Runner.Attempt;
-
-			if (!seekerHovered || !LMB)
-			{
-				seekerTimeline.Value = Runner.Attempt.Progress / Runner.Attempt.Replays[0].Length;
-			}
-
-            for (int i = 0; i < Runner.Attempt.Replays.Length; i++)
-            {
-                var replay = Runner.Attempt.Replays[i];
-
-                int previousFrame = replay.FrameIndex;
-
-                // advance frame forward deterministically
-                while (replay.FrameIndex < replay.Frames.Length - 1 &&
-                       Runner.Attempt.Progress >= replay.Frames[replay.FrameIndex + 1].Progress)
-                {
-                    replay.FrameIndex++;
-                }
-
-                if (replay.FrameIndex != previousFrame)
-                {
-                    GD.Print("NewFrame event being invoked");
-                    OnReplayNewFrame?.Invoke();
-                }
-
-                int next = Math.Min(replay.FrameIndex + 1, replay.Frames.Length - 1);
-
-                var currentFrame = replay.Frames[replay.FrameIndex];
-                var nextFrame = replay.Frames[next];
-
-                double inverse = Mathf.InverseLerp(
-                    currentFrame.Progress,
-                    nextFrame.Progress,
-                    Runner.Attempt.Progress
-                );
-
-                Vector2 cursorPos = currentFrame.CursorPosition.Lerp(
-                    nextFrame.CursorPosition,
-                    (float)Math.Clamp(inverse, 0, 1)
-                );
-
-                CursorPos = cursorPos;
-            }
-		}
-	}
-
-	public void UpdateReplayCursor(Attempt Attempt)
     {
-        // 	if (Attempt.IsReplay)
-	// 	{
-	// 		// Reset everything to zero so it doesn't spin endlessly, or have infinite sensitivity
-	// 		Runner.Camera.Rotation = Vector3.Zero;
-	// 		Attempt.RawCursorPosition = Vector2.Zero;
-	// 		Attempt.CursorPosition = Vector2.Zero;
-	// 	}
-	//
-	// 	if (!Runner.SpinCamera)
-	// 	{
-	// 		if (Attempt.Settings.CursorDrift)
-	// 		{
-	// 			Attempt.CursorPosition = CursorPos.Clamp(-Constants.BOUNDS, Constants.BOUNDS);
-	// 		}
-	// 		else
-	// 		{
-	// 			Attempt.RawCursorPosition = CursorPos;
-	// 			Attempt.CursorPosition = Attempt.RawCursorPosition.Clamp(-Constants.BOUNDS, Constants.BOUNDS);
-	// 		}
-	//
-	// 		Runner.Cursor.Position = new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0);
-	// 		Runner.Camera.Position = new Vector3(0, 0, 3.75f) + new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0) * (float)Attempt.Replays[0].Parallax;
-	// 		Runner.Camera.Rotation = Vector3.Zero;
-	//
-	// 		//videoQuad.Position = new Vector3(Camera.Position.X, Camera.Position.Y, -100);
-	// 	}
-	// 	else
-	// 	{
-	// 		Runner.Camera.Rotation += new Vector3(CursorPos.Y / (float)Math.PI, -CursorPos.X / (float)Math.PI, 0);
-	//
-	// 		Runner.Camera.Rotation = new Vector3((float)Math.Clamp(Runner.Camera.Rotation.X, Mathf.DegToRad(-90), Mathf.DegToRad(90)), Runner.Camera.Rotation.Y, Runner.Camera.Rotation.Z);
-	//
-	// 		Vector3 Origin = new Vector3(0,0,3.5f);
-	// 		Vector3 CursorLock = new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0);
-	// 		// The pivot is to mimic ROBLOX's orbital camera
-	// 		Vector3 Pivot = Runner.Camera.Basis.Z / 4f;
-	//
-	// 		Runner.Camera.Position = Origin + CursorLock * Attempt.Settings.CameraParallax + Pivot;
-	//
-	// 		Vector3 LookVector = Runner.Camera.Basis.Z;
-	// 		Vector2 CameraVec2 = new Vector2(Runner.Camera.Position.X, Runner.Camera.Position.Y);
-	// 		Vector2 LookVec2 = new Vector2(LookVector.X, LookVector.Y);
-	//
-	// 		Attempt.RawCursorPosition = CameraVec2 - LookVec2 * Mathf.Abs(Runner.Camera.Position.Z / LookVector.Z);
-	//
-	// 		Attempt.CursorPosition = Attempt.RawCursorPosition.Clamp(-Constants.BOUNDS, Constants.BOUNDS);
-	// 		Runner.Cursor.Position = new Vector3(Attempt.CursorPosition.X, Attempt.CursorPosition.Y, 0);
-	//
-	// 		//videoQuad.Position = Camera.Position - Camera.Basis.Z * 103.75f;
-	// 		//videoQuad.Rotation = Camera.Rotation;
-	// 	}
+        if (!Runner.Attempt.IsReplay || !Runner.Playing) return;
+
+        if (!seekerHovered || !LMB)
+        {
+            seekerTimeline.Value = Runner.Attempt.Progress / Runner.Attempt.Replays[0].Length;
+        }
+
+        for (int i = 0; i < Runner.Attempt.Replays.Length; i++)
+        {
+            var replay = Runner.Attempt.Replays[i];
+
+            // advance frame forward deterministically
+            while (replay.FrameIndex < replay.Frames.Length - 1 &&
+                   Runner.Attempt.Progress >= replay.Frames[replay.FrameIndex + 1].Progress)
+            {
+                replay.FrameIndex++;
+            }
+
+            int next = Math.Min(replay.FrameIndex + 1, replay.Frames.Length - 1);
+
+            var currentFrame = replay.Frames[replay.FrameIndex];
+            var nextFrame = replay.Frames[next];
+
+            double inverse = Mathf.InverseLerp(
+                currentFrame.Progress,
+                nextFrame.Progress,
+                Runner.Attempt.Progress
+            );
+
+            Vector2 cursorPos = currentFrame.CursorPosition.Lerp(
+                nextFrame.CursorPosition,
+                (float)Math.Clamp(inverse, 0, 1)
+            );
+
+            CursorPosition = cursorPos;
+        }
+
+        CursorManager.UpdateCursor(CursorPosition);
     }
 
-	public void ShowReplayViewer(Attempt attempt)
-	{
-		ViewerVisible = !ViewerVisible;
-		bool visible = ViewerVisible && attempt.IsReplay;
+    public void ShowReplayViewer(Attempt attempt)
+        {
+            ViewerVisible = !ViewerVisible;
+            bool visible = ViewerVisible && attempt.IsReplay;
 
-		ReplayViewer.Visible = visible;
+            ReplayViewer.Visible = visible;
 
-		Input.MouseMode = visible
-		 	? Input.MouseModeEnum.Visible
-		  	: Input.MouseModeEnum.Hidden;
-	}
+            Input.MouseMode = visible
+                ? Input.MouseModeEnum.Visible
+                : Input.MouseModeEnum.Hidden;
+        }
 
-	private void resetToSeekedPosition(float seekedTime)
-	{
-		Attempt att = Runner.Attempt;
+        private void resetToSeekedPosition(float seekedTime)
+        {
+            Attempt att = Runner.Attempt;
 
-		att.Hits = 0;
-		att.Misses = 0;
-		att.Sum = 0;
-		att.Accuracy = 100;
-		att.Score = 0;
-		att.PassedNotes = 0;
-		att.Combo = 0;
-		att.ComboMultiplier = 1;
-		att.ComboMultiplierProgress = 0;
-		att.Health = 100;
-		att.HealthStep = 15;
+            att.Hits = 0;
+            att.Misses = 0;
+            att.Sum = 0;
+            att.Accuracy = 100;
+            att.Score = 0;
+            att.PassedNotes = 0;
+            att.Combo = 0;
+            att.ComboMultiplier = 1;
+            att.ComboMultiplierProgress = 0;
+            att.Health = 100;
+            att.HealthStep = 15;
 
-		for (int i = 0; i < att.Map.Notes.Length; i++)
-		{
-			att.Map.Notes[i].Hittable = false;
-		}
+            for (int i = 0; i < att.Map.Notes.Length; i++)
+            {
+                att.Map.Notes[i].Hittable = false;
+            }
 
-		att.Progress = seekedTime * ReplayLength;
+            att.Progress = seekedTime * ReplayLength;
 
-		for (int i = 0; i < att.Replays[0].Frames.Length; i++)
-		{
-			if (att.Progress < att.Replays[0].Frames[i].Progress)
-			{
-				att.Replays[0].FrameIndex = Math.Max(0, i - 1);
-				break;
-			}
-		}
+            for (int i = 0; i < att.Replays[0].Frames.Length; i++)
+            {
+                if (att.Progress < att.Replays[0].Frames[i].Progress)
+                {
+                    att.Replays[0].FrameIndex = Math.Max(0, i - 1);
+                    break;
+                }
+            }
 
-		if (!SoundManager.Song.Playing)
-		{
-			SoundManager.Song.Play();
-		}
+            if (!SoundManager.Song.Playing)
+            {
+                SoundManager.Song.Play();
+            }
 
-		SoundManager.Song.Seek((float)att.Progress / 1000);
-	}
+            SoundManager.Song.Seek((float)att.Progress / 1000);
+        }
 }

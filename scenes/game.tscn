@@ -1,13 +1,12 @@
 [gd_scene format=3 uid="uid://vp1nmsiqt5yv"]
 
 [ext_resource type="Script" uid="uid://dly10tvxguvhb" path="res://scripts/scenes/GameScene.cs" id="1_bhx41"]
-[ext_resource type="Script" uid="uid://b5kthtdut2gmw" path="res://scripts/ReplayCursorManager.cs" id="2_7025r"]
 [ext_resource type="ArrayMesh" uid="uid://ceww5w8t33lqy" path="res://user/meshes/squircle.obj" id="2_e1j6l"]
+[ext_resource type="Script" uid="uid://bxncinhblsjgg" path="res://scripts/CursorManager.cs" id="2_nepv3"]
 [ext_resource type="Texture2D" uid="uid://b3g4aw54n6bow" path="res://user/skins/default/game/grid.png" id="2_q78ea"]
 [ext_resource type="Script" uid="uid://dp8nga2aot1n2" path="res://scripts/game/Runner.cs" id="2_qnb83"]
 [ext_resource type="Script" uid="uid://bxwlotp5vcjux" path="res://scripts/game/managers/ReplayManager.cs" id="2_twgab"]
 [ext_resource type="Script" uid="uid://okqdw5gj567n" path="res://scripts/game/LegacyRenderer.cs" id="3_ew8wr"]
-[ext_resource type="Script" uid="uid://dgpxhu2ya41qe" path="res://scripts/LiveCursorManager.cs" id="3_m4url"]
 [ext_resource type="Texture2D" uid="uid://3e1tjlr4m0wt" path="res://user/skins/default/game/cursor.png" id="3_negii"]
 [ext_resource type="Script" uid="uid://n6n303pw3qbd" path="res://scripts/game/managers/HudManager.cs" id="3_sww3w"]
 [ext_resource type="Script" uid="uid://cqqaf7cwx5ty1" path="res://scripts/game/ui/HealthBar.cs" id="4_js0lu"]
@@ -254,16 +253,10 @@ ReplayManager = NodePath("ReplayManager")
 UseGameSpace = true
 AddSpaceAsChild = true
 
-[node name="ReplayCursorManager" type="Node" parent="." unique_id=335805251 node_paths=PackedStringArray("replayManager", "runner", "cursor", "camera")]
-script = ExtResource("2_7025r")
-replayManager = NodePath("../ReplayManager")
-runner = NodePath("../Runner")
-cursor = NodePath("../Runner/HUD/Grid/Cursor")
-camera = NodePath("../Runner/Camera3D")
-
-[node name="LiveCursorManager" type="Node" parent="." unique_id=1202704325 node_paths=PackedStringArray("playerInputController", "runner", "cursor", "camera")]
-script = ExtResource("3_m4url")
+[node name="CursorManager" type="Node" parent="." unique_id=862696440 node_paths=PackedStringArray("playerInputController", "replayManager", "runner", "cursor", "camera")]
+script = ExtResource("2_nepv3")
 playerInputController = NodePath("../PlayerInputController")
+replayManager = NodePath("../ReplayManager")
 runner = NodePath("../Runner")
 cursor = NodePath("../Runner/HUD/Grid/Cursor")
 camera = NodePath("../Runner/Camera3D")
@@ -271,10 +264,11 @@ camera = NodePath("../Runner/Camera3D")
 [node name="PlayerInputController" type="Node" parent="." unique_id=340777835]
 script = ExtResource("37_02fa5")
 
-[node name="ReplayManager" type="Node" parent="." unique_id=40137833 node_paths=PackedStringArray("Runner", "ReplayViewer")]
+[node name="ReplayManager" type="Node" parent="." unique_id=40137833 node_paths=PackedStringArray("Runner", "ReplayViewer", "CursorManager")]
 script = ExtResource("2_twgab")
 Runner = NodePath("../Runner")
 ReplayViewer = NodePath("../ReplayViewer")
+CursorManager = NodePath("../CursorManager")
 
 [node name="Runner" type="Node3D" parent="." unique_id=580620214 node_paths=PackedStringArray("HudManager", "Camera", "Grid", "Cursor", "CursorTrail", "Notes", "VideoStreamPlayer")]
 script = ExtResource("2_qnb83")
