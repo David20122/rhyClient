@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Godot;
 
 /// <summary>
@@ -33,7 +33,7 @@ public partial class CursorManager : Node
 
     public override void _Process(double delta)
     {
-        updateCursorRotation(delta);
+        //updateCursorRotation(delta);
     }
 
     public void UpdateCursor(Vector2 inputDelta)
@@ -67,7 +67,8 @@ public partial class CursorManager : Node
 
             camera.Rotation = new Vector3(
                 Mathf.Clamp(
-                    inputDelta.Y / Mathf.Pi, Mathf.DegToRad(-90),
+                    inputDelta.Y / Mathf.Pi,
+                    Mathf.DegToRad(-90),
                     Mathf.DegToRad(90)),
                 -inputDelta.X / Mathf.Pi,
                 0
