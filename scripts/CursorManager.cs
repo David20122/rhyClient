@@ -31,11 +31,6 @@ public partial class CursorManager : Node
         CallDeferred(nameof(assignSettings));
     }
 
-    public override void _Process(double delta)
-    {
-        //updateCursorRotation(delta);
-    }
-
     public void UpdateCursor(Vector2 inputDelta)
     {
         sensitivity = (float)(Attempt.IsReplay ? Attempt.Replays[0].Sensitivity : Attempt.Settings.Sensitivity);
