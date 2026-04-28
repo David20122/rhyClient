@@ -65,7 +65,9 @@ material = SubResource("StandardMaterial3D_lvhmj")
 size = Vector2(0.263, 0.263)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ssr8x"]
-transparency = 1
+transparency = 2
+alpha_scissor_threshold = 0.5
+alpha_antialiasing_mode = 0
 cull_mode = 2
 shading_mode = 0
 disable_fog = true
@@ -253,12 +255,13 @@ ReplayManager = NodePath("ReplayManager")
 UseGameSpace = true
 AddSpaceAsChild = true
 
-[node name="CursorManager" type="Node" parent="." unique_id=862696440 node_paths=PackedStringArray("playerInputController", "replayManager", "runner", "cursor", "camera")]
+[node name="CursorManager" type="Node" parent="." unique_id=862696440 node_paths=PackedStringArray("playerInputController", "replayManager", "runner", "cursor", "cursorTrail", "camera")]
 script = ExtResource("2_nepv3")
 playerInputController = NodePath("../PlayerInputController")
 replayManager = NodePath("../ReplayManager")
 runner = NodePath("../Runner")
 cursor = NodePath("../Runner/HUD/Grid/Cursor")
+cursorTrail = NodePath("../Runner/HUD/Grid/CursorTrail")
 camera = NodePath("../Runner/Camera3D")
 
 [node name="PlayerInputController" type="Node" parent="." unique_id=340777835]

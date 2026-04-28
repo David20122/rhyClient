@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Godot;
 
 /// <summary>
@@ -6,14 +7,17 @@ using Godot;
 /// </summary>
 public partial class CursorManager : Node
 {
+    // fml
     public static Attempt Attempt;
 
     [Export] private PlayerInputController playerInputController;
     [Export] private ReplayManager replayManager;
     [Export] private Runner runner;
     [Export] private MeshInstance3D cursor;
+    [Export] private MultiMeshInstance3D cursorTrail;
     [Export] private Camera3D camera;
 
+    private List<CursorTrailData> activeTrailsData = [];
     private SettingsProfile settings;
     private float sensitivity;
 
@@ -29,6 +33,20 @@ public partial class CursorManager : Node
 
         // wait for settings reference to be assigned
         CallDeferred(nameof(assignSettings));
+    }
+
+    public override void _Process(double delta)
+    {
+        if (!Attempt.Settings.CursorTrail || !runner.Playing)
+            return;
+
+        updateCursorTrail();
+    }
+
+    public override void _ExitTree()
+    {
+        if (activeTrailsData.Count > 0)
+            activeTrailsData.Clear();
     }
 
     public void UpdateCursor(Vector2 inputDelta)
@@ -120,7 +138,60 @@ public partial class CursorManager : Node
         camera.Rotation = Vector3.Zero;
     }
 
-    /// Reset everything to zero so it doesn't spin endlessly, or have infinite sensitivity
+    private void updateCursorTrail()
+    {
+        ulong now = Time.GetTicksUsec();
+        ulong maxLifeTime = (ulong)(settings.TrailTime.Value * 1_000_000);
+
+        CursorTrailData newActiveCursorData = new CursorTrailData(
+            time: now,
+            position: Attempt.CursorPosition,
+            rotation: cursor.Rotation.Z);
+        activeTrailsData.Add(newActiveCursorData);
+
+        cullExpiredTrails(now, maxLifeTime);
+        updateCursorTrailRendering(now);
+    }
+
+    private void cullExpiredTrails(ulong now, ulong maxLifeTime)
+    {
+        for (int i = activeTrailsData.Count - 1; i >= 0; i--)
+        {
+            CursorTrailData trail = activeTrailsData[i];
+            ulong age = now - trail.Time;
+
+            if (age >= maxLifeTime)
+            {
+                activeTrailsData.RemoveAt(i);
+            }
+        }
+    }
+
+    private void updateCursorTrailRendering(ulong now)
+    {
+        float size = ((Vector2)cursor.Mesh.Get("size")).X;
+        cursorTrail.Multimesh.InstanceCount = activeTrailsData.Count;
+
+        for (int j = 0; j < activeTrailsData.Count; j++)
+        {
+            CursorTrailData trail = activeTrailsData[j];
+            ulong difference = now - trail.Time;
+            uint alpha = (uint)(difference / (settings.TrailTime * 1000000) * 255);
+
+            Transform3D transform =
+                new Transform3D(
+                    new Vector3(size, 0, 0),
+                    new Vector3(0, size, 0),
+                    new Vector3(0, 0, size),
+                    new Vector3(trail.Position.X, trail.Position.Y, 0)
+                ).RotatedLocal(Vector3.Back, trail.Rotation);
+
+            cursorTrail.Multimesh.SetInstanceTransform(j, transform);
+            cursorTrail.Multimesh.SetInstanceColor(j, Color.FromHtml($"ffffff{255 - alpha:X2}"));
+        }
+    }
+
+    // Reset everything to zero so it doesn't spin endlessly, or have infinite sensitivity
     private void updateAbsoluteInput()
     {
         camera.Rotation = Vector3.Zero;
