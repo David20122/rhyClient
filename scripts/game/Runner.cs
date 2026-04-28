@@ -76,6 +76,8 @@ public partial class Runner : Node3D
 			}
 		}
 
+        Cursor.RotationDegrees += Vector3.Back * settings.CursorRotation * (float)delta;
+
 		if (Attempt.Map.AudioBuffer != null)
 		{
 			if (Attempt.Progress >= Attempt.MapLength - Constants.HIT_WINDOW)
@@ -208,7 +210,7 @@ public partial class Runner : Node3D
 		float lateness = Attempt.IsReplay ? Attempt.HitsInfo[noteIndex] : (float)(((int)Attempt.Progress - Attempt.Map.Notes[noteIndex].Millisecond) / Attempt.Speed);
 		float factor = 1 - Math.Max(0, lateness - 25) / 150f;
 		uint hitScore = (uint)(100 * Attempt.ComboMultiplier * Attempt.ModsMultiplier * factor * ((Attempt.Speed - 1) / 2.5 + 1));
-		
+
 		switch (hitResult)
 		{
 			case HitResult.Hit:
