@@ -17,18 +17,25 @@ public partial class CursorManager : Node
     [Export] private MultiMeshInstance3D cursorTrail;
     [Export] private Camera3D camera;
 
-    private List<CursorTrailData> activeTrailsData = [];
     private SettingsProfile settings;
     private float sensitivity;
+
+    // Trails
+    // I did my refresh rate but this can change at will
+    private const float trail_spawn_rate = 240;
+    private const float trail_min_detail = 0;
+    private const float trail_max_detail = 100f;
+    private double trailDeltaAccumulator;
+    private List<CursorTrailData> activeTrailsData = [];
 
     public override void _Ready()
     {
         base._Ready();
 
-        runner ??= GetNode<Runner>("root/SceneGame/Runner");
-        cursor ??= GetNode<MeshInstance3D>("root/SceneGame/Cursor");
-        camera ??= GetNode<Camera3D>("root/SceneGame/Camera3D");
-        playerInputController ??= GetNode<PlayerInputController>("root/SceneGame/PlayerInputController");
+        runner ??= GetNode<Runner>("Runner");
+        cursor ??= GetNode<MeshInstance3D>("Cursor");
+        camera ??= GetNode<Camera3D>("Camera3D");
+        playerInputController ??= GetNode<PlayerInputController>("/PlayerInputController");
         replayManager ??= GetNode<ReplayManager>("ReplayManager");
 
         // wait for settings reference to be assigned
@@ -40,15 +47,16 @@ public partial class CursorManager : Node
         if (!runner.Playing) return;
 
         rotateCursor(delta);
-
         if (Attempt.Settings.CursorTrail)
             updateCursorTrail(delta);
     }
 
     public override void _ExitTree()
     {
+        //cleanup so meshes/data doesn't stay after scene reload
         if (activeTrailsData.Count > 0)
             activeTrailsData.Clear();
+        cursorTrail.Multimesh.InstanceCount = 0;
     }
 
     public void UpdateCursor(Vector2 inputDelta)
@@ -140,41 +148,46 @@ public partial class CursorManager : Node
         camera.Rotation = Vector3.Zero;
     }
 
-    private double detailTimer;
-
     private void updateCursorTrail(double delta)
     {
         ulong now = Time.GetTicksUsec();
-        ulong maxLifeTime = (ulong)(settings.TrailTime.Value * 1_000_000);
-        detailTimer -= delta;
-        bool canSpawnTrail = detailTimer <= 0;
 
+        processTrailSpawning(delta, now);
 
-        // if (canSpawnTrail)
-        // {
-        //     GD.Print("spawning trail");
-        //     detailTimer = settings.TrailDetail.Value;
-        //     CursorTrailData newActiveCursorData = new CursorTrailData(
-        //         time: now,
-        //         position: Attempt.CursorPosition,
-        //         rotation: cursor.Rotation.Z);
-        //     activeTrailsData.Add(newActiveCursorData);
-        // }
+        if (activeTrailsData.Count == 0) return;
+
+        cullExpiredTrails(now);
+        updateTrailRendering(now);
+    }
+  private void processTrailSpawning(double delta, ulong now)
+    {
+        float trailDetail = Mathf.Clamp(settings.TrailDetail.Value, trail_min_detail, trail_max_detail);
+        float wantedEmission = trailDetail / trail_max_detail;
+        float rate = wantedEmission * trail_spawn_rate;
+
+        if (rate <= 0f)
+            return;
+
+        double interval = 1.0 / rate;
+        trailDeltaAccumulator += delta;
+        int steps = (int)(trailDeltaAccumulator / interval);
+
+        if (steps <= 0)
+            return;
+
+        trailDeltaAccumulator -= steps * interval;
 
         CursorTrailData newActiveCursorData = new CursorTrailData(
             time: now,
             position: Attempt.CursorPosition,
             rotation: cursor.Rotation.Z);
         activeTrailsData.Add(newActiveCursorData);
-
-        if (activeTrailsData.Count == 0) return;
-
-        cullExpiredTrails(now, maxLifeTime);
-        updateCursorTrailRendering(now);
     }
 
-    private void cullExpiredTrails(ulong now, ulong maxLifeTime)
+    private void cullExpiredTrails(ulong now)
     {
+        ulong maxLifeTime = (ulong)(settings.TrailTime.Value * 1_000_000);
+
         for (int i = activeTrailsData.Count - 1; i >= 0; i--)
         {
             CursorTrailData trail = activeTrailsData[i];
@@ -187,7 +200,7 @@ public partial class CursorManager : Node
         }
     }
 
-    private void updateCursorTrailRendering(ulong now)
+    private void updateTrailRendering(ulong now)
     {
         float size = ((Vector2)cursor.Mesh.Get("size")).X;
         cursorTrail.Multimesh.InstanceCount = activeTrailsData.Count;
@@ -196,17 +209,17 @@ public partial class CursorManager : Node
         {
             CursorTrailData trail = activeTrailsData[j];
             Transform3D transform = Transform3D.Identity
-                    .Scaled(new Vector3(size, size, size))
-                    .Rotated(Vector3.Back, trail.Rotation);
+                .Scaled(new Vector3(size, size, size))
+                .Rotated(Vector3.Back, trail.Rotation);
             transform.Origin = new Vector3(trail.Position.X, trail.Position.Y, 0);
 
             // calculate trail's transparency
             //1. find how long trail exists
             //2. find amount of steps till it fades
-            //3. lerp alpha val from 1 (fully opaque) to 0 (fully transparent)
+            //3. lerp from 1 (fully opaque) to 0 (fully transparent) with interpolated steps
             float elapsed = (now - trail.Time) / 1_000_000f;
-            float normalized = Math.Clamp(elapsed / settings.TrailTime.Value, 0f, 1f);
-            float alpha = Mathf.Lerp(1, 0, normalized);
+            float step = Math.Clamp(elapsed / settings.TrailTime.Value, 0f, 1f);
+            float alpha = Mathf.Lerp(1, 0, step);
             cursorTrail.Multimesh.SetInstanceTransform(j, transform);
             cursorTrail.Multimesh.SetInstanceColor(j, new Color(1, 1, 1, alpha));
         }
