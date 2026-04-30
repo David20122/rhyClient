@@ -76,8 +76,6 @@ public partial class Runner : Node3D
 			}
 		}
 
-        Cursor.RotationDegrees += Vector3.Back * settings.CursorRotation * (float)delta;
-
 		if (Attempt.Map.AudioBuffer != null)
 		{
 			if (Attempt.Progress >= Attempt.MapLength - Constants.HIT_WINDOW)

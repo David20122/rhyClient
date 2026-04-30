@@ -37,10 +37,12 @@ public partial class CursorManager : Node
 
     public override void _Process(double delta)
     {
-        if (!Attempt.Settings.CursorTrail || !runner.Playing)
-            return;
+        if (!runner.Playing) return;
 
-        updateCursorTrail();
+        rotateCursor(delta);
+
+        if (Attempt.Settings.CursorTrail)
+            updateCursorTrail(delta);
     }
 
     public override void _ExitTree()
@@ -138,16 +140,34 @@ public partial class CursorManager : Node
         camera.Rotation = Vector3.Zero;
     }
 
-    private void updateCursorTrail()
+    private double detailTimer;
+
+    private void updateCursorTrail(double delta)
     {
         ulong now = Time.GetTicksUsec();
         ulong maxLifeTime = (ulong)(settings.TrailTime.Value * 1_000_000);
+        detailTimer -= delta;
+        bool canSpawnTrail = detailTimer <= 0;
+
+
+        // if (canSpawnTrail)
+        // {
+        //     GD.Print("spawning trail");
+        //     detailTimer = settings.TrailDetail.Value;
+        //     CursorTrailData newActiveCursorData = new CursorTrailData(
+        //         time: now,
+        //         position: Attempt.CursorPosition,
+        //         rotation: cursor.Rotation.Z);
+        //     activeTrailsData.Add(newActiveCursorData);
+        // }
 
         CursorTrailData newActiveCursorData = new CursorTrailData(
             time: now,
             position: Attempt.CursorPosition,
             rotation: cursor.Rotation.Z);
         activeTrailsData.Add(newActiveCursorData);
+
+        if (activeTrailsData.Count == 0) return;
 
         cullExpiredTrails(now, maxLifeTime);
         updateCursorTrailRendering(now);
@@ -175,19 +195,20 @@ public partial class CursorManager : Node
         for (int j = 0; j < activeTrailsData.Count; j++)
         {
             CursorTrailData trail = activeTrailsData[j];
-            ulong difference = now - trail.Time;
-            uint alpha = (uint)(difference / (settings.TrailTime * 1000000) * 255);
+            Transform3D transform = Transform3D.Identity
+                    .Scaled(new Vector3(size, size, size))
+                    .Rotated(Vector3.Back, trail.Rotation);
+            transform.Origin = new Vector3(trail.Position.X, trail.Position.Y, 0);
 
-            Transform3D transform =
-                new Transform3D(
-                    new Vector3(size, 0, 0),
-                    new Vector3(0, size, 0),
-                    new Vector3(0, 0, size),
-                    new Vector3(trail.Position.X, trail.Position.Y, 0)
-                ).RotatedLocal(Vector3.Back, trail.Rotation);
-
+            // calculate trail's transparency
+            //1. find how long trail exists
+            //2. find amount of steps till it fades
+            //3. lerp alpha val from 1 (fully opaque) to 0 (fully transparent)
+            float elapsed = (now - trail.Time) / 1_000_000f;
+            float normalized = Math.Clamp(elapsed / settings.TrailTime.Value, 0f, 1f);
+            float alpha = Mathf.Lerp(1, 0, normalized);
             cursorTrail.Multimesh.SetInstanceTransform(j, transform);
-            cursorTrail.Multimesh.SetInstanceColor(j, Color.FromHtml($"ffffff{255 - alpha:X2}"));
+            cursorTrail.Multimesh.SetInstanceColor(j, new Color(1, 1, 1, alpha));
         }
     }
 
@@ -200,4 +221,5 @@ public partial class CursorManager : Node
     }
     private void updateCursorRotation(double delta) => cursor.RotationDegrees += Vector3.Back * settings.CursorRotation * (float)delta;
     private void assignSettings() => settings = SettingsManager.Instance.Settings;
+    private void rotateCursor(double delta) => cursor.RotationDegrees += Vector3.Back * settings.CursorRotation * (float)delta;
 }

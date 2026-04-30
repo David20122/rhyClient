@@ -65,9 +65,7 @@ material = SubResource("StandardMaterial3D_lvhmj")
 size = Vector2(0.263, 0.263)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ssr8x"]
-transparency = 2
-alpha_scissor_threshold = 0.5
-alpha_antialiasing_mode = 0
+transparency = 1
 cull_mode = 2
 shading_mode = 0
 disable_fog = true
@@ -273,13 +271,12 @@ Runner = NodePath("../Runner")
 ReplayViewer = NodePath("../ReplayViewer")
 CursorManager = NodePath("../CursorManager")
 
-[node name="Runner" type="Node3D" parent="." unique_id=580620214 node_paths=PackedStringArray("HudManager", "Camera", "Grid", "Cursor", "CursorTrail", "Notes", "VideoStreamPlayer")]
+[node name="Runner" type="Node3D" parent="." unique_id=580620214 node_paths=PackedStringArray("HudManager", "Camera", "Grid", "Cursor", "Notes", "VideoStreamPlayer")]
 script = ExtResource("2_qnb83")
 HudManager = NodePath("HUD")
 Camera = NodePath("Camera3D")
 Grid = NodePath("HUD/Grid")
 Cursor = NodePath("HUD/Grid/Cursor")
-CursorTrail = NodePath("HUD/Grid/CursorTrail")
 Notes = NodePath("Notes")
 VideoStreamPlayer = NodePath("Video/VideoViewport/VideoStreamPlayer")
 
