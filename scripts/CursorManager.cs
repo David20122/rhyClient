@@ -153,13 +153,11 @@ public partial class CursorManager : Node
         ulong now = Time.GetTicksUsec();
 
         processTrailSpawning(delta, now);
-
-        if (activeTrailsData.Count == 0) return;
-
         cullExpiredTrails(now);
         updateTrailRendering(now);
     }
-  private void processTrailSpawning(double delta, ulong now)
+
+    private void processTrailSpawning(double delta, ulong now)
     {
         float trailDetail = Mathf.Clamp(settings.TrailDetail.Value, trail_min_detail, trail_max_detail);
         float wantedEmission = trailDetail / trail_max_detail;
@@ -177,17 +175,16 @@ public partial class CursorManager : Node
 
         trailDeltaAccumulator -= steps * interval;
 
-        CursorTrailData newActiveCursorData = new CursorTrailData(
+        activeTrailsData.Add(new CursorTrailData(
             time: now,
             position: Attempt.CursorPosition,
-            rotation: cursor.Rotation.Z);
-        activeTrailsData.Add(newActiveCursorData);
+            rotation: cursor.Rotation.Z
+        ));
     }
 
     private void cullExpiredTrails(ulong now)
     {
         ulong maxLifeTime = (ulong)(settings.TrailTime.Value * 1_000_000);
-
         for (int i = activeTrailsData.Count - 1; i >= 0; i--)
         {
             CursorTrailData trail = activeTrailsData[i];
@@ -208,6 +205,11 @@ public partial class CursorManager : Node
         for (int j = 0; j < activeTrailsData.Count; j++)
         {
             CursorTrailData trail = activeTrailsData[j];
+
+            // if same position as mouse skip rendering trail
+            if (trail.Position.DistanceTo(Attempt.CursorPosition) == 0)
+                continue;
+
             Transform3D transform = Transform3D.Identity
                 .Scaled(new Vector3(size, size, size))
                 .Rotated(Vector3.Back, trail.Rotation);
