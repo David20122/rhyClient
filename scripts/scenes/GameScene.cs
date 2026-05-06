@@ -41,18 +41,18 @@ public partial class GameScene : BaseScene
         {
             if (!Runner.Playing || Attempt.IsReplay) return;
 
-            if (!Attempt.Settings.AbsoluteInput)
-            {
-                CursorManager.UpdateCursor(relative);
-            }
-            else
+            if (Attempt.Settings.AbsoluteInput)
             {
                 // Take mouse position difference between center of the current window size
                 // This is to make the mouse position the same as relative if it was locked, or confined
-                Vector2 AbsolutePosition = absolute - (GetViewport().GetWindow().Size / 2);
+                Vector2 absolutePosition = absolute - (GetViewport().GetWindow().Size / 2);
 
                 // Multiply by 0.582f to make it 1:1 to absolute scale on nightly
-                CursorManager.UpdateCursor(AbsolutePosition * 0.582f);
+                CursorManager.UpdateCursor(absolutePosition * 0.582f);
+            }
+            else
+            {
+                CursorManager.UpdateCursor(relative);
             }
             Attempt.DistanceMM += relative.Length() / Attempt.Settings.Sensitivity / 57.5;
         };
@@ -181,9 +181,6 @@ public partial class GameScene : BaseScene
 		map = MapParser.Decode(map.FilePath);
 		Attempt = new Attempt(map, speed, startFrom, mods ?? [], players, replays);
 
-        // temp fix as rewriting the cursor stuff requires attempt context (remove later) -thom
-        CursorManager.Attempt = Attempt;
-
 		SceneManager.Load("res://scenes/game.tscn");
 	}
 
@@ -196,9 +193,6 @@ public partial class GameScene : BaseScene
 		Attempt oldAttempt = Attempt;
 		Map map = MapParser.Decode(oldAttempt.Map.FilePath);
 		Attempt = new Attempt(map, oldAttempt.Speed, oldAttempt.StartFrom, oldAttempt.Mods, oldAttempt.Players, oldAttempt.Replays);
-
-        // temp fix as rewriting the cursor stuff requires attempt context (remove later) -thom
-        CursorManager.Attempt = Attempt;
 
 		SceneManager.ReloadCurrentScene();
 	}
