@@ -191,6 +191,12 @@ public partial class GameScene : BaseScene
 		Runner.Stop(false);
 
 		Attempt oldAttempt = Attempt;
+
+		if (!FileAccess.FileExists(Attempt.ReplayPath) && !Attempt.IsReplay)
+		{
+			_ = ToastNotification.Notify("Replay desync detected! Sum didn't match notes hit", 2);
+		}
+
 		Map map = MapParser.Decode(oldAttempt.Map.FilePath);
 		Attempt = new Attempt(map, oldAttempt.Speed, oldAttempt.StartFrom, oldAttempt.Mods, oldAttempt.Players, oldAttempt.Replays);
 

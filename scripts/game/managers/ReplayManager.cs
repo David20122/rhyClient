@@ -93,7 +93,28 @@ public partial class ReplayManager : Node
 		_file.Seek(_file.GetLength());
 		_file.Store64(attempt.FirstNote);
 		_file.Store64(attempt.Sum);
-		GD.Print(string.Join(", ", attempt.HitsInfo));
+		// GD.Print(string.Join(", ", attempt.HitsInfo));
+		// GD.Print($"Sum: {attempt.FirstNote}+{attempt.Sum}={attempt.FirstNote + attempt.Sum}");
+		// GD.Print($"HitsInfoCount: {attempt.HitsInfo.Count()}");
+
+		if (attempt.FirstNote + attempt.Sum != (uint)attempt.HitsInfo.Length)
+		{
+
+			_file.Close();
+
+			if (FileAccess.FileExists(ReplayPath))
+			{
+
+                string mismatch = $"Sum: {attempt.FirstNote}+{attempt.Sum}={attempt.FirstNote + attempt.Sum}";
+				string hitsInfoDebug = string.Join(", ", attempt.HitsInfo);
+				string passedNotesDebug = $"Passed Notes: {attempt.PassedNotes}";
+				DirAccess.RemoveAbsolute(ReplayPath);
+				GD.PushWarning($"Corrupted De-synced replay deleted!\nPath: {ReplayPath}\n{mismatch}\nHits Info: {hitsInfoDebug}\n{passedNotesDebug}");
+			}
+
+			return;
+		}
+		
 		for (ulong i = attempt.FirstNote; i < attempt.FirstNote + attempt.Sum; i++)
         {
 			_file.Store8((byte)(attempt.HitsInfo[i] == -1 ? 255 : Math.Min(254, attempt.HitsInfo[i] * (254 / 55))));

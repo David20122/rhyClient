@@ -1,7 +1,6 @@
 using Godot;
 using System;
 using System.Collections.Generic;
-using System.IO;
 
 public partial class Results : BaseScene
 {
@@ -82,6 +81,14 @@ public partial class Results : BaseScene
 		footer.GetNode<Button>("Back").Pressed += Stop;
 		footer.GetNode<Button>("Play").Pressed += Replay;
 		replayButton.Visible = !GameScene.Attempt.Map.Ephemeral;
+
+		
+		if (!FileAccess.FileExists(GameScene.Attempt.ReplayPath) && !GameScene.Attempt.IsReplay)
+		{
+			_ = ToastNotification.Notify("Replay desync detected! Sum didn't match notes hit", 2);
+			replayButton.Visible = false;
+		}
+
 		replayButton.Pressed += () =>
 		{
 			string path;
@@ -95,7 +102,7 @@ public partial class Results : BaseScene
 				path = GameScene.Attempt.ReplayPath;
 			}
 
-			if (File.Exists(path))
+			if (FileAccess.FileExists(path))
 			{
 				Replay replay = new(path);
 				SoundManager.Song.Stop();
