@@ -271,10 +271,11 @@ runner = NodePath("../../Runner")
 [node name="PlayerInputController" type="Node" parent="." unique_id=340777835]
 script = ExtResource("37_02fa5")
 
-[node name="ReplayManager" type="Node" parent="." unique_id=40137833 node_paths=PackedStringArray("Runner", "ReplayViewer")]
+[node name="ReplayManager" type="Node" parent="." unique_id=40137833 node_paths=PackedStringArray("Runner", "ReplayViewer", "CursorManager")]
 script = ExtResource("2_twgab")
 Runner = NodePath("../Runner")
 ReplayViewer = NodePath("../ReplayViewer")
+CursorManager = NodePath("../CursorManager")
 
 [node name="Runner" type="Node3D" parent="." unique_id=580620214 node_paths=PackedStringArray("HudManager", "Camera", "Grid", "Cursor", "Notes", "VideoStreamPlayer")]
 script = ExtResource("2_qnb83")

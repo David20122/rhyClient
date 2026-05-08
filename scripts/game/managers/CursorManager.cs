@@ -42,8 +42,8 @@ public partial class CursorManager : Node
         sensitivity = (float)(runner.Attempt.IsReplay ? runner.Attempt.Replays[0].Sensitivity : runner.Attempt.Settings.Sensitivity);
         sensitivity *= runner.Attempt.Settings.FoV.Value / 70f;
 
-        if (runner.Attempt.Settings.AbsoluteInput)
-            updateAbsoluteInput();
+        if (runner.Attempt.Settings.AbsoluteInput || runner.Attempt.IsReplay)
+            repositionAbsolute();
 
         if (runner.SpinCamera)
             updateSpinState(inputDelta);
@@ -55,32 +55,31 @@ public partial class CursorManager : Node
     {
         Attempt attempt = runner.Attempt;
 
-        if (attempt.IsReplay)
+        if (!attempt.IsReplay)
         {
-            attempt.CursorPosition = inputDelta;
+            camera.Rotation += new Vector3(-inputDelta.Y / 120 * sensitivity / (float)Math.PI, -inputDelta.X / 120 * sensitivity / (float)Math.PI, 0);
         }
         else
         {
-            // Camera Looking
-            camera.Rotation += new Vector3(-inputDelta.Y / 120 * sensitivity / (float)Math.PI, -inputDelta.X / 120 * sensitivity / (float)Math.PI, 0);
-            camera.Rotation = new Vector3((float)Math.Clamp(camera.Rotation.X, Mathf.DegToRad(-90), Mathf.DegToRad(90)), camera.Rotation.Y, camera.Rotation.Z);
-
-            Vector3 Origin = new Vector3(0, 0, 3.5f);
-            Vector3 CursorLock = new Vector3(attempt.CursorPosition.X, attempt.CursorPosition.Y, 0);
-            // The pivot is to mimic ROBLOX's orbital camera
-            Vector3 Pivot = camera.Basis.Z / 4f;
-
-            // Proper Parallax Support
-            camera.Position = Origin + CursorLock * (float)attempt.Settings.CameraParallax + Pivot;
-
-            Vector3 LookVector = camera.Basis.Z;
-            Vector2 CameraVector2 = new Vector2(camera.Position.X, camera.Position.Y);
-            Vector2 LookVector2 = new Vector2(LookVector.X, LookVector.Y);
-
-            // Project Cursor from Camera's "ray cast"
-            attempt.RawCursorPosition = CameraVector2 - LookVector2 * Mathf.Abs(camera.Position.Z / LookVector.Z);
-            attempt.CursorPosition = attempt.RawCursorPosition.Clamp(-Constants.BOUNDS, Constants.BOUNDS);
+            camera.Rotation += new Vector3(inputDelta.Y / (float)Math.PI, -inputDelta.X / (float)Math.PI, 0);
         }
+        camera.Rotation = new Vector3((float)Math.Clamp(camera.Rotation.X, Mathf.DegToRad(-90), Mathf.DegToRad(90)), camera.Rotation.Y, camera.Rotation.Z);
+
+        Vector3 Origin = new Vector3(0, 0, 3.5f);
+        Vector3 CursorLock = new Vector3(attempt.CursorPosition.X, attempt.CursorPosition.Y, 0);
+        // The pivot is to mimic ROBLOX's orbital camera
+        Vector3 Pivot = camera.Basis.Z / 4f;
+
+        // Proper Parallax Support
+        camera.Position = Origin + CursorLock * (float)attempt.Settings.CameraParallax + Pivot;
+
+        Vector3 LookVector = camera.Basis.Z;
+        Vector2 CameraVector2 = new Vector2(camera.Position.X, camera.Position.Y);
+        Vector2 LookVector2 = new Vector2(LookVector.X, LookVector.Y);
+
+        // Project Cursor from Camera's "ray cast"
+        attempt.RawCursorPosition = CameraVector2 - LookVector2 * Mathf.Abs(camera.Position.Z / LookVector.Z);
+        attempt.CursorPosition = attempt.RawCursorPosition.Clamp(-Constants.BOUNDS, Constants.BOUNDS);
 
         cursorMesh.Position = new Vector3(attempt.CursorPosition.X, attempt.CursorPosition.Y, 0);
     }
@@ -115,7 +114,7 @@ public partial class CursorManager : Node
     }
 
     // Reset everything to zero so it doesn't have infinite sensitivity
-    private void updateAbsoluteInput()
+    private void repositionAbsolute()
     {
         camera.Rotation = Vector3.Zero;
         runner.Attempt.RawCursorPosition = Vector2.Zero;
