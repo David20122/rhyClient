@@ -1,10 +1,7 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Godot;
 
@@ -76,11 +73,12 @@ public partial class MapManager : Node
 
     public static void RemoveVideo(Map map)
     {
-        Godot.FileAccess file = Godot.FileAccess.Open(map.FilePath, Godot.FileAccess.ModeFlags.Read);
+        _ = Godot.FileAccess.Open(map.FilePath, Godot.FileAccess.ModeFlags.Read);
 
         map.VideoBuffer = null;
 
         var oldmap = MapParser.Decode(map.FilePath);
+
         map.Mappers = map.PrettyMappers.Split(" ");
         map.AudioBuffer = oldmap.AudioBuffer;
         map.CoverBuffer = oldmap.CoverBuffer;
@@ -96,7 +94,6 @@ public partial class MapManager : Node
     {
         try
         {
-
             try
             {
                 File.Delete(map.FilePath);
@@ -105,19 +102,42 @@ public partial class MapManager : Node
             {
                 if (File.Exists(map.FilePath))
                 {
-
                     Logger.Error("Unable to delete map");
+                    return;
                 }
             }
 
             MapCache.RemoveMap(map);
-            Maps.Remove(map);
+            Maps.RemoveAll(x => x.Id == map.Id);
 
-            MapDeleted?.Invoke(map);
+            Callable.From(() =>
+            {
+                _ = ToastNotification.Notify($"Deleted {map.PrettyTitle}!");
+            }).CallDeferred();
+            Callable.From(() => MapDeleted?.Invoke(map)).CallDeferred();
         }
         catch (Exception e)
         {
             Logger.Error(e.Message);
+        }
+    }
+
+    public static void Sanitize(Map map)
+    {
+        string sanitizedTitle = Util.String.SanitizeZalgo(map.PrettyTitle);
+        string sanitizedMappers = Util.String.SanitizeZalgo(map.PrettyMappers);
+        string sanitizedDiffName = Util.String.SanitizeZalgo(map.DifficultyName);
+
+        bool updated = sanitizedTitle != map.PrettyTitle || sanitizedMappers != map.PrettyMappers || sanitizedDiffName != map.DifficultyName;
+
+        if (updated)
+        {
+            map.PrettyTitle = sanitizedTitle;
+            map.PrettyMappers = sanitizedMappers;
+            map.DifficultyName = sanitizedDiffName;
+
+            Update(map);
+            Logger.Log($"Sanitized map {map.Name}");
         }
     }
 

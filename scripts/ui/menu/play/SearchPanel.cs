@@ -1,5 +1,4 @@
 using Godot;
-using System;
 
 public partial class SearchPanel : Panel
 {
@@ -14,7 +13,8 @@ public partial class SearchPanel : Panel
         lineEdit = GetNode<LineEdit>("LineEdit");
         searchIcon = GetNode<TextureRect>("TextureRect");
 
-        lineEdit.TextChanged += (text) => {
+        lineEdit.TextChanged += (text) =>
+        {
             searchIcon.SelfModulate = new Color(1, 1, 1, text == "" ? 0.5f : 1);
 
             MapList.Instance.Search(SearchAuthor ? null : text, SearchAuthor ? text : null);
@@ -25,7 +25,9 @@ public partial class SearchPanel : Panel
     {
         if (@event is InputEventKey eventKey && eventKey.Pressed && !eventKey.CtrlPressed && !eventKey.AltPressed)
         {
-            if (GetViewport().GuiGetFocusOwner() == null && eventKey.Keycode != Key.Space && eventKey.Keycode != Key.Escape)
+            Control focusOwner = GetViewport().GuiGetFocusOwner();
+
+            if (focusOwner is not LineEdit && eventKey.Keycode != Key.Space && eventKey.Keycode != Key.Escape)
             {
                 lineEdit.GrabFocus();
             }

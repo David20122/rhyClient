@@ -40,42 +40,9 @@ public partial class Rhythia : Node
         }
 
         // Stats
+        Stats.Initialize();
+        Stats.Instance.GamesOpened++;
 
-        if (!File.Exists($"{Constants.USER_FOLDER}/stats"))
-        {
-            Logger.Log("Stats file not found");
-            File.WriteAllText($"{Constants.USER_FOLDER}/stats", "");
-            Stats.Save();
-        }
-
-        try
-        {
-            Stats.Load();
-        }
-        catch
-        {
-            Stats.GamePlaytime = 0;
-            Stats.TotalPlaytime = 0;
-            Stats.GamesOpened = 0;
-            Stats.TotalDistance = 0;
-            Stats.NotesHit = 0;
-            Stats.NotesMissed = 0;
-            Stats.HighestCombo = 0;
-            Stats.Attempts = 0;
-            Stats.Passes = 0;
-            Stats.FullCombos = 0;
-            Stats.HighestScore = 0;
-            Stats.TotalScore = 0;
-            Stats.RageQuits = 0;
-            Stats.PassAccuracies = [];
-            Stats.FavoriteMaps = [];
-
-            Stats.Save();
-        }
-
-        Stats.GamesOpened++;
-
-        
         // marking sspms for importing can be done with an one liner, kept the following block of code in case we need to loop over every valid map file for some reason
 
         // List<string> import = [];
@@ -94,14 +61,15 @@ public partial class Rhythia : Node
 
         var nonPhxmMaps = Directory.EnumerateFiles($"{Constants.USER_FOLDER}/maps", $"*.*", SearchOption.AllDirectories).Where(f => f.GetExtension().ToLower() == "sspm" || f.GetExtension().ToLower() == "txt");
         await MapParser.BulkImport([.. nonPhxmMaps], notify: true);
-        
+
         // delete after importing
         foreach (string file in nonPhxmMaps)
         {
             File.Delete(file);
         }
 
-        GetViewport().Connect("files_dropped", Callable.From((string[] files) => {
+        GetViewport().Connect("files_dropped", Callable.From((string[] files) =>
+        {
             EmitSignal(SignalName.FilesDropped, files);
 
             List<string> maps = [];
@@ -171,23 +139,31 @@ public partial class Rhythia : Node
         }
 
         Quitting = true;
+        
+//         Logger.Log("Attempting to quit...");
+
+//         var settings = SettingsManager.Instance.Settings;
 
         if (GameScene.Attempt != null && !GameScene.Attempt.IsReplay)
         {
             GameScene.Instance.Runner.Stop();
         }
 
-        Stats.TotalPlaytime += (Time.GetTicksUsec() - Constants.STARTED) / 1000000;
+        Stats.Instance.TotalPlaytime += (Time.GetTicksUsec() - Constants.STARTED) / 1000000;
 
         if (loaded)
         {
             SettingsManager.Save();
-            Stats.Save();
+            Stats.Instance.Save();
         }
 
         Discord.Client.Dispose();
-        
-        Instance.GetTree().Quit();
+
+        Tween quitTween = Instance.CreateTween();
+        quitTween.TweenCallback(Callable.From(() => {
+            Logger.Log("Quitting");
+            Instance.GetTree().Quit();
+        })).SetDelay(0.5);
     }
 
     public override void _Notification(int what)
@@ -197,6 +173,15 @@ public partial class Rhythia : Node
             if (SceneManager.Scene != null && SceneManager.Scene is GameScene)
                 Stats.RageQuits++;
             Quit();
+        }
+        else if (what == NotificationApplicationFocusOut)
+        {
+            Engine.MaxFps = 30;
+        }
+        else if (what == NotificationApplicationFocusIn)
+        {
+            var settings = SettingsManager.Instance.Settings;
+            Engine.MaxFps = settings.LockFPS ? settings.FPS : 0;
         }
     }
 }

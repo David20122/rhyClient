@@ -62,6 +62,8 @@ public partial class Map : RefCounted
 
     public string AudioExt { get; set; } = string.Empty;
 
+    public int PlayCount { get; set; } = 0;
+
     private Texture2D cover = DefaultCover;
 
     [Ignore]
@@ -93,25 +95,24 @@ public partial class Map : RefCounted
             return [];
         }
     }
-    
+
     private Texture2D getCover()
     {
         string path = $"{MapUtil.MapsCacheFolder}/{Name}";
 
         if (cover == DefaultCover && File.Exists($"{path}/cover.png"))
-    {
-        byte[] coverBuffer = File.ReadAllBytes($"{path}/cover.png");
-        Image image = Util.Misc.LoadImageFromBuffer(coverBuffer);
-        if (image != null)
-            cover = ImageTexture.CreateFromImage(image);
+        {
+            byte[] coverBuffer = File.ReadAllBytes($"{path}/cover.png");
+            Image image = Util.Misc.LoadImageFromBuffer(coverBuffer);
+            if (image != null)
+                cover = ImageTexture.CreateFromImage(image);
         }
 
-    return cover;
-}
-    public Map()
-    {
-
+        return cover;
+        
     }
+    
+    public Map() { }
 
     public Map(string filePath, Note[] data = null, string id = null, string artist = "", string title = "", float rating = 0, string[] mappers = null, int difficulty = 0, string difficultyName = null, int? length = null, byte[] audioBuffer = null, byte[] coverBuffer = null, byte[] videoBuffer = null, bool ephemeral = false, string artistLink = "", string artistPlatform = "")
     {
@@ -124,24 +125,19 @@ public partial class Map : RefCounted
         PrettyTitle = Artist != "" ? $"{Artist} - {Title}" : Title;
         Rating = rating;
         Mappers = mappers ?? ["N/A"];
+        PrettyMappers = mappers.Join();
         CachedMappers = mappers.Join("_");
-        PrettyMappers = "";
-        Difficulty = difficulty;
+        Difficulty = Math.Clamp(difficulty, 0, Constants.DIFFICULTIES.Length - 1);
         DifficultyName = difficultyName?.StripEscapes() ?? Constants.DIFFICULTIES[Difficulty];
         AudioBuffer = audioBuffer;
         CoverBuffer = coverBuffer;
         VideoBuffer = videoBuffer;
         Notes = data ?? Array.Empty<Note>();
         Length = length ?? Notes[^1].Millisecond;
-        Name = (id.Replace(" ", "_") ?? new Regex("[^a-zA-Z0-9_-]").Replace($"{Mappers.Stringify()}_{PrettyTitle}".Replace(" ", "_"), ""));
+        Name = id.Replace(" ", "_") ?? new Regex("[^a-zA-Z0-9_-]").Replace($"{Mappers.Stringify()}_{PrettyTitle}".Replace(" ", "_"), "");
         AudioExt = (AudioBuffer != null && Encoding.UTF8.GetString(AudioBuffer[0..4]) == "OggS") ? "ogg" : "mp3";
 
-        foreach (string mapper in Mappers)
-        {
-            PrettyMappers += $"{mapper}, ";
-        }
-
-        PrettyMappers = PrettyMappers.Substr(0, PrettyMappers.Length - 2).StripEscapes();
+        MapManager.Sanitize(this);
     }
 
     public string EncodeMeta()

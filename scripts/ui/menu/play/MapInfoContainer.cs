@@ -1,6 +1,6 @@
-using Godot;
 using System;
 using System.IO;
+using Godot;
 
 public partial class MapInfoContainer : Panel, ISkinnable
 {
@@ -13,64 +13,115 @@ public partial class MapInfoContainer : Panel, ISkinnable
 
     private readonly PackedScene leaderboardScoreTemplate = ResourceLoader.Load<PackedScene>("res://prefabs/score_panel.tscn");
 
+    // Info & main buttons
+
+    [ExportCategory("Info")]
+
+    [Export]
     private Panel info;
+
+    [Export]
+    private ColorRect dim;
+
+    [Export]
     private TextureRect coverBackground;
+
+    [Export]
     private TextureRect cover;
+
+    [Export]
     private Panel infoSubholder;
+
+    [Export]
     private RichTextLabel mainLabel;
     private string mainLabelFormat;
+
+    [Export]
     private RichTextLabel extraLabel;
     private string extraLabelFormat;
+
+    [Export]
     private LinkPopupButton artistLink;
     private string artistLinkFormat;
-    private HBoxContainer mapButtonsContainer;
+
+    [Export]
     private Button favoriteButton;
+
+    [Export]
     private Button videoButton;
+
+    [Export]
     private FileDialog videoDialog;
+
+    [Export]
     private Button copyButton;
+
+    [Export]
     private FileDialog copyDialog;
+
+    [Export]
     private Button deleteButton;
 
+    // Actions panel
+
+    [ExportCategory("Actions")]
+
+    [Export]
     private Panel actions;
-    private Panel previewHolder;
-    private Panel modesHolder;
-    private Panel modifiersHolder;
+
+    [Export]
+    private FlatPreview preview;
+
+    // [Export]
+    // private Panel previewHolder;
+
+    // [Export]
+    // private Panel modesHolder;
+
+    // [Export]
+    // private Panel modifiersHolder;
+
+    [Export]
     private Panel speedHolder;
+
+    [Export]
     private HBoxContainer speedPresets;
+
+    [Export]
     private Panel playHolder;
+
+    [Export]
     private Button startButton;
 
+    // Leaderboard
+
+    [ExportCategory("Leaderboards")]
+
+    [Export]
     private Panel leaderboard;
+
+    [Export]
     private ScrollContainer lbScrollContainer;
+
+    [Export]
     private VBoxContainer lbContainer;
+
+    [Export]
     private Button lbExpand;
+
+    [Export]
     private Button lbHide;
 
-    private ColorRect dim;
+    // Misc
+
     private ShaderMaterial outlineMaterial;
 
     public override void _Ready()
     {
-        info = GetNode<Panel>("Info");
-
-        Panel infoHolder = info.GetNode("ScrollContainer").GetNode<Panel>("Holder");
-
-        coverBackground = infoHolder.GetNode("CoverContainer").GetNode<TextureRect>("Background");
-        cover = coverBackground.GetNode<TextureRect>("Cover");
-        infoSubholder = infoHolder.GetNode<Panel>("Subholder");
-        mainLabel = infoSubholder.GetNode<RichTextLabel>("MainLabel");
         mainLabelFormat = mainLabel.Text;
-        extraLabel = infoSubholder.GetNode<RichTextLabel>("Extra");
         extraLabelFormat = extraLabel.Text;
-        artistLink = coverBackground.GetNode<LinkPopupButton>("ArtistLink");
         artistLinkFormat = artistLink.Text;
-        mapButtonsContainer = infoSubholder.GetNode<HBoxContainer>("Buttons");
-        favoriteButton = mapButtonsContainer.GetNode<Button>("Favorite");
-        videoButton = mapButtonsContainer.GetNode<Button>("Video");
-        videoDialog = videoButton.GetNode<FileDialog>("VideoDialog");
-        copyButton = mapButtonsContainer.GetNode<Button>("Copy");
-        copyDialog = copyButton.GetNode<FileDialog>("CopyDialog");
-        deleteButton = mapButtonsContainer.GetNode<Button>("Delete");
+        outlineMaterial = info.GetNode<Panel>("Outline").Material as ShaderMaterial;
 
         favoriteButton.Pressed += () =>
         {
@@ -114,33 +165,12 @@ public partial class MapInfoContainer : Panel, ISkinnable
 
         coverBackground.Connect("resized", Callable.From(updateOffset));
 
-        actions = GetNode<Panel>("Actions");
-
-        Panel actionsHolder = actions.GetNode("ScrollContainer").GetNode<Panel>("Holder");
-
-        previewHolder = actionsHolder.GetNode<Panel>("Preview");
-        modesHolder = actionsHolder.GetNode<Panel>("Modes");
-        modifiersHolder = actionsHolder.GetNode<Panel>("Modifiers");
-        speedHolder = actionsHolder.GetNode<Panel>("Speed");
-        speedPresets = speedHolder.GetNode("ScrollContainer").GetNode<HBoxContainer>("Presets");
-        playHolder = actionsHolder.GetNode<Panel>("Play");
-        startButton = playHolder.GetNode<Button>("Button");
-
-        leaderboard = GetNode<Panel>("Leaderboard");
-        lbScrollContainer = leaderboard.GetNode<ScrollContainer>("ScrollContainer");
-        lbContainer = lbScrollContainer.GetNode<VBoxContainer>("VBoxContainer");
-        lbExpand = leaderboard.GetNode<Button>("Expand");
-        lbHide = GetNode<Button>("LeaderboardHide");
-
-        dim = GetNode<ColorRect>("Dim");
-        outlineMaterial = info.GetNode<Panel>("Outline").Material as ShaderMaterial;
-
         Modulate = Color.Color8(255, 255, 255, 0);
 
         // Speed setup
 
-        HSlider speedSlider = speedHolder.GetNode<HSlider>("HSlider");
-        LineEdit speedEdit = speedHolder.GetNode<LineEdit>("LineEdit");
+        var speedSlider = speedHolder.GetNode<HSlider>("HSlider");
+        var speedEdit = speedHolder.GetNode<LineEdit>("LineEdit");
 
         void displaySpeed(double speed)
         {
@@ -165,15 +195,18 @@ public partial class MapInfoContainer : Panel, ISkinnable
 
         void applySpeed()
         {
-            double value = ((speedEdit.Text == "" || !speedEdit.Text.IsValidFloat()) ? speedEdit.PlaceholderText : speedEdit.Text).ToFloat();
+            if (!double.TryParse(speedEdit.Text, System.Globalization.CultureInfo.InvariantCulture, out double value))
+            {
+                value = 100;
+            }
 
             value = Math.Clamp(value, 25, 1000) / 100;
 
             Lobby.SetSpeed(value);
 
-            if (SoundManager.Map.Name != Map.Name)
+            if (SoundManager.Map?.Name == Map.Name && SoundManager.Song.Playing)
             {
-                SoundManager.PlayJukebox(Map);
+                SoundManager.Song.PitchScale = (float)Lobby.Speed;
             }
         }
 
@@ -187,8 +220,8 @@ public partial class MapInfoContainer : Panel, ISkinnable
 
         // StartFrom setup
 
-        HSlider startFromSlider = playHolder.GetNode<HSlider>("HSlider");
-        LineEdit startFromEdit = playHolder.GetNode<LineEdit>("LineEdit");
+        var startFromSlider = playHolder.GetNode<HSlider>("HSlider");
+        var startFromEdit = playHolder.GetNode<LineEdit>("LineEdit");
 
         void displayStartFrom(double startFrom)
         {
@@ -209,6 +242,7 @@ public partial class MapInfoContainer : Panel, ISkinnable
 
             double value = 0;
             string[] split = input.Split(":");
+
             split.Reverse();
 
             if (split.Length > 1 && split[1].IsValidFloat())
@@ -216,10 +250,8 @@ public partial class MapInfoContainer : Panel, ISkinnable
                 value += 60 * split[1].ToFloat();
             }
 
-            if (split[0].IsValidFloat())
+            if (double.TryParse(split[0], System.Globalization.CultureInfo.InvariantCulture, out double inputValue))
             {
-                float inputValue = split[0].ToFloat();
-
                 if (inputValue < 1)
                 {
                     inputValue *= Map.Length / 1000;
@@ -232,14 +264,14 @@ public partial class MapInfoContainer : Panel, ISkinnable
 
             Lobby.SetStartFrom(value);
 
-            if (SoundManager.Map.Name != Map.Name)
+            if (SoundManager.Map?.Name != Map.Name)
             {
-                SoundManager.PlayJukebox(Map);
+                SoundManager.StartMapSelectionPlayback(Map);
             }
 
-            if (seek)
+            if (seek && SoundManager.Song.Playing)
             {
-                SoundManager.Song.Play((float)Lobby.StartFrom / 1000);
+                SoundManager.Song.Seek((float)Lobby.StartFrom / 1000);
             }
         }
 
@@ -247,7 +279,7 @@ public partial class MapInfoContainer : Panel, ISkinnable
         startFromEdit.TextSubmitted += (_) => { applyStartFrom(); };
         startFromSlider.ValueChanged += value =>
         {
-            applyStartFrom((Math.Round(startFromSlider.Value * Map.Length) / 1000).ToString(), false);
+            applyStartFrom((Math.Round(value * Map.Length) / 1000).ToString("F2", new System.Globalization.CultureInfo("en-US")), false);
         };
         startFromSlider.DragEnded += changed =>
         {
@@ -263,7 +295,7 @@ public partial class MapInfoContainer : Panel, ISkinnable
 
         // Leaderboard
 
-        Panel lbExpandHover = lbExpand.GetNode<Panel>("Hover");
+        var lbExpandHover = lbExpand.GetNode<Panel>("Hover");
 
         void tweenExpandHover(bool show)
         {
@@ -284,7 +316,7 @@ public partial class MapInfoContainer : Panel, ISkinnable
 
     public override void _Process(double delta)
     {
-        outlineMaterial.SetShaderParameter("cursor_position", GetViewport().GetMousePosition());
+        outlineMaterial?.SetShaderParameter("cursor_position", GetViewport().GetMousePosition());
     }
 
     public override void _Input(InputEvent @event)
@@ -309,8 +341,10 @@ public partial class MapInfoContainer : Panel, ISkinnable
         }
     }
 
-	public void Setup(Map map)
-	{
+    public void Setup(Map map)
+    {
+        if (map == null) return;
+
         if (Name == map.Name)
         {
             return;
@@ -344,9 +378,24 @@ public partial class MapInfoContainer : Panel, ISkinnable
 
         // Info
 
-        mainLabel.Text = string.Format(mainLabelFormat, map.PrettyTitle, Constants.DIFFICULTY_COLORS[map.Difficulty].ToHtml(), map.DifficultyName, map.PrettyMappers);
-        extraLabel.Text = string.Format(extraLabelFormat, Util.String.FormatTime(map.Length / 1000), map.Notes.Length, map.Name);
-        coverBackground.SelfModulate = Constants.DIFFICULTY_COLORS[map.Difficulty];
+        var difficultyColor = Constants.DIFFICULTY_COLORS[Math.Clamp(map.Difficulty, 0, Constants.DIFFICULTY_COLORS.Length - 1)];
+
+        mainLabel.Text = string.Format(
+            mainLabelFormat,
+            Util.String.SanitizeBBCode(map.PrettyTitle),
+            difficultyColor.ToHtml(),
+            Util.String.SanitizeBBCode(map.DifficultyName),
+            Util.String.SanitizeBBCode(map.PrettyMappers)
+        );
+
+        extraLabel.Text = string.Format(
+            extraLabelFormat,
+            Util.String.FormatTime(map.Length / 1000),
+            map.Notes.Length,
+            Util.String.SanitizeBBCode(map.Name)
+        );
+
+        coverBackground.SelfModulate = difficultyColor;
         cover.Texture = map.Cover;
         favoriteButton.TooltipText = map.Favorite ? "Unfavorite" : "Favorite";
         favoriteButton.Icon = map.Favorite ? SkinManager.Instance.Skin.UnfavoriteButtonImage : SkinManager.Instance.Skin.FavoriteButtonImage;
@@ -360,7 +409,7 @@ public partial class MapInfoContainer : Panel, ISkinnable
 
         Lobby.SetStartFrom(0);
 
-        previewHolder.GetNode("AspectRatioContainer").GetNode<FlatPreview>("FlatPreview").Setup(map, true);
+        preview.Setup(map, true);
 
         // Leaderboard
 
